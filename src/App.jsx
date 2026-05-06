@@ -22,7 +22,11 @@ import {
   Club,
   Palette,
   Gamepad2,
-  Trash2
+  Trash2,
+  Eye,
+  EyeOff,
+  UserRound,
+  Shield
 } from "lucide-react";
 
 const TEXT = {
@@ -72,11 +76,22 @@ const TEXT = {
     drawnCards: "Drawn cards",
     standardDeck: "Standard Playing Cards",
     customDeck: "Custom Event Cards",
+    privateHands: "Private Hands",
+    warMode: "War / Battle",
     decksCount: "Decks",
     jokers: "Jokers",
     dealCards: "Deal Cards",
     cardsEach: "Cards each",
     preset: "Preset",
+    sharedDeck: "One shared deck",
+    deckPerPlayer: "One deck per player",
+    seeHand: "See my hand",
+    hideHand: "Hide my hand",
+    nextPlayer: "Next Player",
+    hiddenHand: "Hand hidden",
+    playerTurn: "Player turn",
+    drawBattle: "Draw Battle Cards",
+    battle: "Battle!",
     spinWheel: "Spin Wheel",
     selected: "Selected",
     addOption: "Add Option",
@@ -140,11 +155,22 @@ const TEXT = {
     drawnCards: "Cartes pigées",
     standardDeck: "Cartes à jouer standard",
     customDeck: "Cartes événement custom",
+    privateHands: "Mains privées",
+    warMode: "Bataille",
     decksCount: "Jeux",
     jokers: "Jokers",
     dealCards: "Distribuer",
     cardsEach: "Cartes chacun",
     preset: "Preset",
+    sharedDeck: "Un deck partagé",
+    deckPerPlayer: "Un deck par joueur",
+    seeHand: "Voir ma main",
+    hideHand: "Cacher ma main",
+    nextPlayer: "Joueur suivant",
+    hiddenHand: "Main cachée",
+    playerTurn: "Tour de",
+    drawBattle: "Piger pour bataille",
+    battle: "Bataille !",
     spinWheel: "Tourner la roue",
     selected: "Sélectionné",
     addOption: "Ajouter une option",
@@ -200,7 +226,7 @@ const themes = [
 ];
 
 const cardPresets = [
-  { id: "war", label: "Battle", decks: 1, jokers: false, cardsEach: 26 },
+  { id: "war", label: "Battle", decks: 1, jokers: false, cardsEach: 1 },
   { id: "president", label: "President", decks: 1, jokers: true, cardsEach: 7 },
   { id: "poker", label: "Poker", decks: 1, jokers: false, cardsEach: 5 },
   { id: "blackjack", label: "Blackjack", decks: 6, jokers: false, cardsEach: 2 }
@@ -250,6 +276,10 @@ function randomRoll(sides) {
   return Math.floor(Math.random() * sides) + 1;
 }
 
+function shuffleArray(array) {
+  return [...array].sort(() => Math.random() - 0.5);
+}
+
 function buildStandardDeck(deckCount = 1, includeJokers = true) {
   const deck = [];
 
@@ -275,6 +305,16 @@ function buildStandardDeck(deckCount = 1, includeJokers = true) {
   return deck;
 }
 
+function cardValue(card) {
+  if (!card) return 0;
+  if (card.rank === "Joker") return 15;
+  if (card.rank === "A") return 14;
+  if (card.rank === "K") return 13;
+  if (card.rank === "Q") return 12;
+  if (card.rank === "J") return 11;
+  return Number(card.rank);
+}
+
 function DiceFace({ value, sides, rolling }) {
   if (sides !== 6) {
     return (
@@ -294,9 +334,9 @@ function DiceFace({ value, sides, rolling }) {
   );
 }
 
-function PlayingCard({ card, flipping }) {
+function PlayingCard({ card, flipping, small = false }) {
   return (
-    <div className={`playingCard ${flipping ? "cardFlip" : ""} ${card?.color === "red" ? "redCard" : "blackCard"}`}>
+    <div className={`playingCard ${small ? "smallPlayingCard" : ""} ${flipping ? "cardFlip" : ""} ${card?.color === "red" ? "redCard" : "blackCard"}`}>
       <div className="cardCorner top">
         <span>{card?.rank || "?"}</span>
         <small>{card?.suit || "★"}</small>
@@ -311,6 +351,15 @@ function PlayingCard({ card, flipping }) {
         <span>{card?.rank || "?"}</span>
         <small>{card?.suit || "★"}</small>
       </div>
+    </div>
+  );
+}
+
+function CardBack({ small = false }) {
+  return (
+    <div className={`cardBack ${small ? "smallPlayingCard" : ""}`}>
+      <Shield size={small ? 24 : 44} />
+      <strong>BGH</strong>
     </div>
   );
 }
@@ -351,6 +400,8 @@ export default function App() {
         ];
   });
 
+  const cardPlayers = players.slice(0, 6);
+
   const [bankAmount, setBankAmount] = useState(100);
   const [bankFrom, setBankFrom] = useState(1);
   const [bankTo, setBankTo] = useState(2);
@@ -363,12 +414,17 @@ export default function App() {
   const [deckCount, setDeckCount] = useState(1);
   const [includeJokers, setIncludeJokers] = useState(true);
   const [cardsEach, setCardsEach] = useState(5);
+  const [distributionMode, setDistributionMode] = useState("shared");
+  const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
+  const [privateHandVisible, setPrivateHandVisible] = useState(false);
   const [drawnPlayingCard, setDrawnPlayingCard] = useState(null);
   const [playingCardHistory, setPlayingCardHistory] = useState(() => {
     const saved = localStorage.getItem("bgh_playing_card_history");
     return saved ? JSON.parse(saved) : [];
   });
   const [hands, setHands] = useState({});
+  const [battleCards, setBattleCards] = useState([]);
+  const [battleResult, setBattleResult] = useState("");
 
   const [customCards, setCustomCards] = useState(() => {
     const saved = localStorage.getItem("bgh_cards");
@@ -422,7 +478,6 @@ export default function App() {
   const totalRoll = useMemo(() => rolls.reduce((sum, value) => sum + value, 0), [rolls]);
   const minutes = String(Math.floor(seconds / 60)).padStart(2, "0");
   const remainingSeconds = String(seconds % 60).padStart(2, "0");
-
   const currentDeck = useMemo(() => buildStandardDeck(deckCount, includeJokers), [deckCount, includeJokers]);
 
   useEffect(() => {
@@ -443,6 +498,13 @@ export default function App() {
 
     return () => clearInterval(timerRef.current);
   }, [timerRunning]);
+
+  useEffect(() => {
+    if (currentPlayerIndex >= cardPlayers.length) {
+      setCurrentPlayerIndex(0);
+      setPrivateHandVisible(false);
+    }
+  }, [cardPlayers.length, currentPlayerIndex]);
 
   function handleRoll() {
     setRolling(true);
@@ -545,6 +607,9 @@ export default function App() {
     setDeckCount(preset.decks);
     setIncludeJokers(preset.jokers);
     setCardsEach(preset.cardsEach);
+    setPrivateHandVisible(false);
+    setBattleCards([]);
+    setBattleResult("");
   }
 
   function drawPlayingCard() {
@@ -561,20 +626,69 @@ export default function App() {
   }
 
   function dealCards() {
-    const shuffled = [...currentDeck].sort(() => Math.random() - 0.5);
     const nextHands = {};
 
-    players.forEach((player, playerIndex) => {
-      nextHands[player.id] = [];
+    if (distributionMode === "perPlayer") {
+      cardPlayers.forEach((player) => {
+        nextHands[player.id] = shuffleArray(buildStandardDeck(1, includeJokers));
+      });
+    } else {
+      const shuffled = shuffleArray(currentDeck);
+      cardPlayers.forEach((player) => {
+        nextHands[player.id] = [];
+      });
 
-      for (let i = 0; i < cardsEach; i += 1) {
-        const card = shuffled[playerIndex * cardsEach + i];
-        if (card) nextHands[player.id].push(card);
+      let cardIndex = 0;
+      for (let round = 0; round < cardsEach; round += 1) {
+        cardPlayers.forEach((player) => {
+          const card = shuffled[cardIndex];
+          if (card) nextHands[player.id].push(card);
+          cardIndex += 1;
+        });
       }
-    });
+    }
 
     setHands(nextHands);
+    setPrivateHandVisible(false);
+    setCurrentPlayerIndex(0);
+    setBattleCards([]);
+    setBattleResult("");
+
     if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
+  }
+
+  function nextPlayer() {
+    setPrivateHandVisible(false);
+    setCurrentPlayerIndex((current) => (current + 1) % Math.max(cardPlayers.length, 1));
+  }
+
+  function drawBattleCards() {
+    const results = cardPlayers.map((player) => {
+      const playerHand = hands[player.id] || [];
+      const card = playerHand.length > 0
+        ? playerHand[Math.floor(Math.random() * playerHand.length)]
+        : currentDeck[Math.floor(Math.random() * currentDeck.length)];
+
+      return {
+        playerId: player.id,
+        playerName: player.name,
+        card,
+        value: cardValue(card)
+      };
+    });
+
+    const highest = Math.max(...results.map((item) => item.value));
+    const winners = results.filter((item) => item.value === highest);
+
+    setBattleCards(results);
+
+    if (winners.length > 1) {
+      setBattleResult(t.battle);
+    } else {
+      setBattleResult(`${winners[0].playerName} wins`);
+    }
+
+    if (navigator.vibrate) navigator.vibrate([80, 40, 80]);
   }
 
   function addCard() {
@@ -613,6 +727,10 @@ export default function App() {
     setCustomCardHistory([]);
     setPlayingCardHistory([]);
     setHands({});
+    setBattleCards([]);
+    setBattleResult("");
+    setPrivateHandVisible(false);
+    setCurrentPlayerIndex(0);
   }
 
   function addRandomItem() {
@@ -635,7 +753,7 @@ export default function App() {
     const selectedIndex = Math.floor(Math.random() * randomItems.length);
     const segmentAngle = 360 / randomItems.length;
     const targetAngle = 360 - selectedIndex * segmentAngle - segmentAngle / 2;
-    const extraSpins = 1440;
+    const extraSpins = 2520 + Math.floor(Math.random() * 720);
     const finalRotation = wheelRotation + extraSpins + targetAngle;
 
     setSpinningWheel(true);
@@ -644,8 +762,8 @@ export default function App() {
     setTimeout(() => {
       setRandomResult(randomItems[selectedIndex]);
       setSpinningWheel(false);
-      if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-    }, 1900);
+      if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 180]);
+    }, 6200);
   }
 
   function toggleTableTool(tool) {
@@ -771,26 +889,21 @@ export default function App() {
 
         <div className="cardModeTabs smallTabs">
           <button className={cardMode === "standard" ? "active" : ""} onClick={() => setCardMode("standard")}>{t.standardDeck}</button>
+          <button className={cardMode === "private" ? "active" : ""} onClick={() => setCardMode("private")}>{t.privateHands}</button>
+          <button className={cardMode === "war" ? "active" : ""} onClick={() => setCardMode("war")}>{t.warMode}</button>
           <button className={cardMode === "custom" ? "active" : ""} onClick={() => setCardMode("custom")}>{t.customDeck}</button>
         </div>
 
         {cardMode === "standard" && (
           <>
-            <div className="tableCardControls">
-              <label>{t.decksCount}</label>
-              <select value={deckCount} onChange={(e) => setDeckCount(Number(e.target.value))}>
-                {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => <option key={n} value={n}>{n}</option>)}
-              </select>
-
-              <button className={includeJokers ? "toggleOn" : ""} onClick={() => setIncludeJokers((v) => !v)}>
-                {t.jokers}
-              </button>
-            </div>
-
             <PlayingCard card={drawnPlayingCard || { rank: "?", suit: "★", color: "black" }} flipping={cardFlipping} />
             <button className="miniAction" onClick={drawPlayingCard}>{t.drawCard}</button>
           </>
         )}
+
+        {cardMode === "private" && <PrivateHandsPanel compact />}
+
+        {cardMode === "war" && <WarPanel compact />}
 
         {cardMode === "custom" && (
           <>
@@ -856,13 +969,117 @@ export default function App() {
 
         <div className="compactWheelWrap">
           <div className="wheelNeedle"></div>
-          <div className="wheel smallWheel" style={{ transform: `rotate(${wheelRotation}deg)` }}>
+          <div className={`wheel smallWheel ${spinningWheel ? "wheelSpinning" : ""}`} style={{ transform: `rotate(${wheelRotation}deg)` }}>
             <div className="wheelCenter"><Sparkles size={28} /></div>
           </div>
         </div>
 
         <div className="compactResult">{randomResult || "—"}</div>
         <button className="miniAction" onClick={spinWheel}>{t.spinWheel}</button>
+      </div>
+    );
+  }
+
+  function PrivateHandsPanel({ compact = false }) {
+    const currentPlayer = cardPlayers[currentPlayerIndex] || cardPlayers[0];
+    const currentHand = currentPlayer ? hands[currentPlayer.id] || [] : [];
+
+    return (
+      <div className={compact ? "privatePanel compactPrivatePanel" : "privatePanel"}>
+        <div className="privacyBanner">
+          <UserRound size={22} />
+          <strong>{t.playerTurn} {currentPlayer?.name || "Player"}</strong>
+        </div>
+
+        <div className="distributionGrid">
+          <button className={distributionMode === "shared" ? "active" : ""} onClick={() => setDistributionMode("shared")}>
+            {t.sharedDeck}
+          </button>
+          <button className={distributionMode === "perPlayer" ? "active" : ""} onClick={() => setDistributionMode("perPlayer")}>
+            {t.deckPerPlayer}
+          </button>
+        </div>
+
+        <div className="bankTransferCard">
+          <label>{t.decksCount}</label>
+          <select value={deckCount} onChange={(e) => setDeckCount(Number(e.target.value))}>
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => <option key={n} value={n}>{n}</option>)}
+          </select>
+
+          <label>{t.cardsEach}</label>
+          <input type="number" min="1" max="20" value={cardsEach} onChange={(e) => setCardsEach(Number(e.target.value))} />
+
+          <button className={includeJokers ? "secondaryAction toggleOn" : "secondaryAction"} onClick={() => setIncludeJokers((v) => !v)}>
+            {t.jokers}
+          </button>
+
+          <button className="primaryAction" onClick={dealCards}>{t.dealCards}</button>
+        </div>
+
+        {!privateHandVisible && (
+          <div className="hiddenHandBox">
+            <CardBack small={compact} />
+            <strong>{t.hiddenHand}</strong>
+          </div>
+        )}
+
+        {privateHandVisible && (
+          <div className="privateHandGrid">
+            {currentHand.length === 0 && <span>{t.noHistory}</span>}
+            {currentHand.map((card) => <PlayingCard key={card.id} card={card} small />)}
+          </div>
+        )}
+
+        <div className="privateActions">
+          {!privateHandVisible && (
+            <button className="secondaryAction" onClick={() => setPrivateHandVisible(true)}>
+              <Eye size={18} />
+              {t.seeHand}
+            </button>
+          )}
+
+          {privateHandVisible && (
+            <button className="secondaryAction" onClick={() => setPrivateHandVisible(false)}>
+              <EyeOff size={18} />
+              {t.hideHand}
+            </button>
+          )}
+
+          <button className="primaryAction" onClick={nextPlayer}>{t.nextPlayer}</button>
+        </div>
+      </div>
+    );
+  }
+
+  function WarPanel({ compact = false }) {
+    return (
+      <div className={compact ? "warPanel compactWarPanel" : "warPanel"}>
+        <div className="distributionGrid">
+          <button className={distributionMode === "shared" ? "active" : ""} onClick={() => setDistributionMode("shared")}>
+            {t.sharedDeck}
+          </button>
+          <button className={distributionMode === "perPlayer" ? "active" : ""} onClick={() => setDistributionMode("perPlayer")}>
+            {t.deckPerPlayer}
+          </button>
+        </div>
+
+        <button className="secondaryAction" onClick={dealCards}>{t.dealCards}</button>
+        <button className="primaryAction" onClick={drawBattleCards}>{t.drawBattle}</button>
+
+        {battleResult && (
+          <div className="battleResult">
+            <strong>{battleResult}</strong>
+          </div>
+        )}
+
+        <div className="battleGrid">
+          {battleCards.map((item) => (
+            <div className="battleCard" key={item.playerId}>
+              <span>{item.playerName}</span>
+              <PlayingCard card={item.card} small />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -1017,7 +1234,7 @@ export default function App() {
               <>
                 <div className="premiumGrid">
                   <div className="premiumCard"><Wallet size={42} /><h3>{t.bankTitle}</h3><p>{t.bankDesc}</p><span>{t.locked}</span></div>
-                  <div className="premiumCard"><CreditCard size={42} /><h3>{t.cards}</h3><p>{lang === "fr" ? "Cartes standard, jokers et cartes événement custom." : "Standard cards, jokers and custom event cards."}</p><span>{t.locked}</span></div>
+                  <div className="premiumCard"><CreditCard size={42} /><h3>{t.cards}</h3><p>{lang === "fr" ? "Cartes standard, mains privées et bataille." : "Standard cards, private hands and war mode."}</p><span>{t.locked}</span></div>
                   <div className="premiumCard"><Palette size={42} /><h3>{t.themes}</h3><p>{lang === "fr" ? "Skins visuels premium, chalet, casino, futuriste et plus." : "Premium skins: cabin, casino, future and more."}</p><span>{t.locked}</span></div>
                   <div className="premiumCard"><Gamepad2 size={42} /><h3>{t.miniGames}</h3><p>{lang === "fr" ? "Mini jeux tactiles offline." : "Offline tactile mini games."}</p><span>{t.locked}</span></div>
                 </div>
@@ -1060,6 +1277,8 @@ export default function App() {
                   <>
                     <div className="cardModeTabs">
                       <button className={cardMode === "standard" ? "active" : ""} onClick={() => setCardMode("standard")}>{t.standardDeck}</button>
+                      <button className={cardMode === "private" ? "active" : ""} onClick={() => setCardMode("private")}>{t.privateHands}</button>
+                      <button className={cardMode === "war" ? "active" : ""} onClick={() => setCardMode("war")}>{t.warMode}</button>
                       <button className={cardMode === "custom" ? "active" : ""} onClick={() => setCardMode("custom")}>{t.customDeck}</button>
                     </div>
 
@@ -1085,25 +1304,18 @@ export default function App() {
                           <button className={includeJokers ? "secondaryAction toggleOn" : "secondaryAction"} onClick={() => setIncludeJokers((v) => !v)}>
                             {t.jokers}
                           </button>
-
-                          <button className="primaryAction" onClick={dealCards}>{t.dealCards}</button>
                         </div>
 
                         <div className="cardsHero">
                           <PlayingCard card={drawnPlayingCard || { rank: "?", suit: "★", color: "black" }} flipping={cardFlipping} />
                           <button className="primaryAction" onClick={drawPlayingCard}>{t.drawCard}</button>
                         </div>
-
-                        <div className="handsGrid">
-                          {players.map((player) => (
-                            <div className="handCard" key={player.id}>
-                              <strong>{player.name}</strong>
-                              <span>{(hands[player.id] || []).map((card) => card.label).join(" • ") || "—"}</span>
-                            </div>
-                          ))}
-                        </div>
                       </>
                     )}
+
+                    {cardMode === "private" && <PrivateHandsPanel />}
+
+                    {cardMode === "war" && <WarPanel />}
 
                     {cardMode === "custom" && (
                       <>
@@ -1142,7 +1354,7 @@ export default function App() {
                     <div className="wheelShell">
                       <div className="wheelNeedle"></div>
 
-                      <div className="wheel" style={{ transform: `rotate(${wheelRotation}deg)` }}>
+                      <div className={`wheel ${spinningWheel ? "wheelSpinning" : ""}`} style={{ transform: `rotate(${wheelRotation}deg)` }}>
                         {randomItems.map((item, index) => {
                           const angle = (360 / randomItems.length) * index;
                           return (
