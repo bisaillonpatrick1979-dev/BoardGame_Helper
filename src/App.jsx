@@ -19,7 +19,10 @@ import {
   Gem,
   Swords,
   Landmark,
-  Club
+  Club,
+  Palette,
+  Gamepad2,
+  Trash2
 } from "lucide-react";
 
 const TEXT = {
@@ -34,7 +37,7 @@ const TEXT = {
     hero: "Replace missing dice, timers, score sheets, cards and money tools with one premium mobile companion.",
     rescue: "Rescue Game Night",
     rollDice: "Roll Dice",
-    startTimer: "Start Timer",
+    startTimer: "Start",
     pauseTimer: "Pause",
     reset: "Reset",
     total: "Total",
@@ -51,6 +54,7 @@ const TEXT = {
     randomizer: "Randomizer",
     kits: "Game Kits",
     themes: "Themes",
+    miniGames: "Mini Games",
     bankTitle: "Game Bank",
     bankDesc: "Money balances, transfers and transaction history.",
     amount: "Amount",
@@ -68,6 +72,11 @@ const TEXT = {
     drawnCards: "Drawn cards",
     standardDeck: "Standard Playing Cards",
     customDeck: "Custom Event Cards",
+    decksCount: "Decks",
+    jokers: "Jokers",
+    dealCards: "Deal Cards",
+    cardsEach: "Cards each",
+    preset: "Preset",
     spinWheel: "Spin Wheel",
     selected: "Selected",
     addOption: "Add Option",
@@ -80,7 +89,10 @@ const TEXT = {
     conquestKit: "World Conquest Kit",
     dungeonKit: "Dungeon Quest Kit",
     fiveDiceKit: "Five Dice Score Kit",
-    cardKit: "Classic Card Kit"
+    cardKit: "Classic Card Kit",
+    chooseTheme: "Choose Theme",
+    hangman: "Hangman",
+    newWord: "New Word"
   },
   fr: {
     home: "Accueil",
@@ -110,6 +122,7 @@ const TEXT = {
     randomizer: "Randomizer",
     kits: "Kits de jeux",
     themes: "Thèmes",
+    miniGames: "Mini jeux",
     bankTitle: "Banque de jeu",
     bankDesc: "Argent par joueur, transferts et historique.",
     amount: "Montant",
@@ -127,6 +140,11 @@ const TEXT = {
     drawnCards: "Cartes pigées",
     standardDeck: "Cartes à jouer standard",
     customDeck: "Cartes événement custom",
+    decksCount: "Jeux",
+    jokers: "Jokers",
+    dealCards: "Distribuer",
+    cardsEach: "Cartes chacun",
+    preset: "Preset",
     spinWheel: "Tourner la roue",
     selected: "Sélectionné",
     addOption: "Ajouter une option",
@@ -139,7 +157,10 @@ const TEXT = {
     conquestKit: "Kit Conquête du Monde",
     dungeonKit: "Kit Quête Donjon",
     fiveDiceKit: "Kit Score 5 Dés",
-    cardKit: "Kit Cartes Classiques"
+    cardKit: "Kit Cartes Classiques",
+    chooseTheme: "Choisir un thème",
+    hangman: "Pendu",
+    newWord: "Nouveau mot"
   }
 };
 
@@ -157,34 +178,33 @@ const defaultCustomCards = [
 ];
 
 const suits = [
-  { symbol: "♠", name: "Spades", color: "black" },
-  { symbol: "♥", name: "Hearts", color: "red" },
-  { symbol: "♦", name: "Diamonds", color: "red" },
-  { symbol: "♣", name: "Clubs", color: "black" }
+  { symbol: "♠", color: "black" },
+  { symbol: "♥", color: "red" },
+  { symbol: "♦", color: "red" },
+  { symbol: "♣", color: "black" }
 ];
 
 const ranks = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
 
-function buildStandardDeck() {
-  const deck = [];
+const themes = [
+  { id: "classic", name: "Classic Neon", premium: false },
+  { id: "cabin", name: "Night Cabin", premium: false },
+  { id: "casino", name: "Premium Casino", premium: true },
+  { id: "future", name: "Cyber Future", premium: true },
+  { id: "fantasy", name: "Fantasy Quest", premium: true },
+  { id: "arcade", name: "Retro Arcade", premium: true },
+  { id: "pirate", name: "Pirate Treasure", premium: true },
+  { id: "halloween", name: "Halloween Night", premium: true },
+  { id: "cartoon", name: "Family Cartoon", premium: true },
+  { id: "rgb", name: "RGB Party", premium: true }
+];
 
-  suits.forEach((suit) => {
-    ranks.forEach((rank) => {
-      deck.push({
-        id: `${rank}-${suit.symbol}`,
-        rank,
-        suit: suit.symbol,
-        color: suit.color,
-        label: `${rank}${suit.symbol}`
-      });
-    });
-  });
-
-  deck.push({ id: "joker-red", rank: "Joker", suit: "★", color: "red", label: "Joker" });
-  deck.push({ id: "joker-black", rank: "Joker", suit: "★", color: "black", label: "Joker" });
-
-  return deck;
-}
+const cardPresets = [
+  { id: "war", label: "Battle", decks: 1, jokers: false, cardsEach: 26 },
+  { id: "president", label: "President", decks: 1, jokers: true, cardsEach: 7 },
+  { id: "poker", label: "Poker", decks: 1, jokers: false, cardsEach: 5 },
+  { id: "blackjack", label: "Blackjack", decks: 6, jokers: false, cardsEach: 2 }
+];
 
 const gameKits = [
   {
@@ -224,8 +244,35 @@ const gameKits = [
   }
 ];
 
+const hangmanWords = ["DICE", "CARD", "BOARD", "TOKEN", "CASTLE", "DRAGON", "PLAYER", "PUZZLE"];
+
 function randomRoll(sides) {
   return Math.floor(Math.random() * sides) + 1;
+}
+
+function buildStandardDeck(deckCount = 1, includeJokers = true) {
+  const deck = [];
+
+  for (let d = 1; d <= deckCount; d += 1) {
+    suits.forEach((suit) => {
+      ranks.forEach((rank) => {
+        deck.push({
+          id: `${d}-${rank}-${suit.symbol}`,
+          rank,
+          suit: suit.symbol,
+          color: suit.color,
+          label: `${rank}${suit.symbol}`
+        });
+      });
+    });
+
+    if (includeJokers) {
+      deck.push({ id: `${d}-joker-red`, rank: "Joker", suit: "★", color: "red", label: "Joker" });
+      deck.push({ id: `${d}-joker-black`, rank: "Joker", suit: "★", color: "black", label: "Joker" });
+    }
+  }
+
+  return deck;
 }
 
 function DiceFace({ value, sides, rolling }) {
@@ -273,14 +320,14 @@ export default function App() {
   const [isPremium, setIsPremium] = useState(() => localStorage.getItem("bgh_premium") === "true");
   const [premiumTool, setPremiumTool] = useState("bank");
   const [activeTab, setActiveTab] = useState("home");
+  const [theme, setTheme] = useState(() => localStorage.getItem("bgh_theme") || "classic");
   const t = TEXT[lang];
 
   const tabs = [
     { id: "home", label: t.home, icon: Home },
     { id: "dice", label: t.dice, icon: Dice6 },
-    { id: "timer", label: t.timer, icon: Timer },
-    { id: "score", label: t.score, icon: Trophy },
     { id: "table", label: t.table, icon: LayoutGrid },
+    { id: "score", label: t.score, icon: Trophy },
     { id: "premium", label: t.premium, icon: isPremium ? Unlock : Lock }
   ];
 
@@ -313,12 +360,15 @@ export default function App() {
   });
 
   const [cardMode, setCardMode] = useState("standard");
-  const [standardDeck] = useState(buildStandardDeck);
+  const [deckCount, setDeckCount] = useState(1);
+  const [includeJokers, setIncludeJokers] = useState(true);
+  const [cardsEach, setCardsEach] = useState(5);
   const [drawnPlayingCard, setDrawnPlayingCard] = useState(null);
   const [playingCardHistory, setPlayingCardHistory] = useState(() => {
     const saved = localStorage.getItem("bgh_playing_card_history");
     return saved ? JSON.parse(saved) : [];
   });
+  const [hands, setHands] = useState({});
 
   const [customCards, setCustomCards] = useState(() => {
     const saved = localStorage.getItem("bgh_cards");
@@ -349,14 +399,18 @@ export default function App() {
           dice: true,
           timer: true,
           score: true,
-          cards: false,
-          bank: false,
+          cards: true,
+          bank: true,
           randomizer: false
         };
   });
 
+  const [secretWord, setSecretWord] = useState("PLAYER");
+  const [letters, setLetters] = useState([]);
+
   useEffect(() => localStorage.setItem("bgh_lang", lang), [lang]);
   useEffect(() => localStorage.setItem("bgh_premium", String(isPremium)), [isPremium]);
+  useEffect(() => localStorage.setItem("bgh_theme", theme), [theme]);
   useEffect(() => localStorage.setItem("bgh_players", JSON.stringify(players)), [players]);
   useEffect(() => localStorage.setItem("bgh_bank_history", JSON.stringify(bankHistory)), [bankHistory]);
   useEffect(() => localStorage.setItem("bgh_cards", JSON.stringify(customCards)), [customCards]);
@@ -368,6 +422,8 @@ export default function App() {
   const totalRoll = useMemo(() => rolls.reduce((sum, value) => sum + value, 0), [rolls]);
   const minutes = String(Math.floor(seconds / 60)).padStart(2, "0");
   const remainingSeconds = String(seconds % 60).padStart(2, "0");
+
+  const currentDeck = useMemo(() => buildStandardDeck(deckCount, includeJokers), [deckCount, includeJokers]);
 
   useEffect(() => {
     if (!timerRunning) return;
@@ -423,10 +479,19 @@ export default function App() {
   }
 
   function addPlayer() {
-    setPlayers((current) => [
-      ...current,
-      { id: Date.now(), name: `Player ${current.length + 1}`, score: 0, money: 1500 }
-    ]);
+    setPlayers((current) => {
+      if (current.length >= 8) return current;
+
+      return [
+        ...current,
+        {
+          id: Date.now(),
+          name: `Player ${current.length + 1}`,
+          score: 0,
+          money: 1500
+        }
+      ];
+    });
   }
 
   function resetScores() {
@@ -438,11 +503,11 @@ export default function App() {
   }
 
   function changeMoney(playerId, amount) {
-    const player = players.find((p) => p.id === playerId);
+    const player = players.find((p) => p.id === Number(playerId));
 
     setPlayers((current) =>
       current.map((p) =>
-        p.id === playerId ? { ...p, money: Math.max(0, (p.money || 0) + amount) } : p
+        p.id === Number(playerId) ? { ...p, money: Math.max(0, (p.money || 0) + amount) } : p
       )
     );
 
@@ -452,7 +517,7 @@ export default function App() {
   function transferMoney() {
     const amount = Number(bankAmount);
 
-    if (!amount || amount <= 0 || bankFrom === bankTo) return;
+    if (!amount || amount <= 0 || Number(bankFrom) === Number(bankTo)) return;
 
     const fromPlayer = players.find((p) => p.id === Number(bankFrom));
     const toPlayer = players.find((p) => p.id === Number(bankTo));
@@ -474,6 +539,42 @@ export default function App() {
   function resetBank() {
     setPlayers((current) => current.map((p) => ({ ...p, money: 1500 })));
     setBankHistory([]);
+  }
+
+  function applyCardPreset(preset) {
+    setDeckCount(preset.decks);
+    setIncludeJokers(preset.jokers);
+    setCardsEach(preset.cardsEach);
+  }
+
+  function drawPlayingCard() {
+    setCardFlipping(true);
+
+    setTimeout(() => {
+      const picked = currentDeck[Math.floor(Math.random() * currentDeck.length)];
+      setDrawnPlayingCard(picked);
+      setPlayingCardHistory((old) => [{ id: Date.now(), text: picked.label }, ...old.slice(0, 14)]);
+      setCardFlipping(false);
+
+      if (navigator.vibrate) navigator.vibrate([70, 40, 70]);
+    }, 600);
+  }
+
+  function dealCards() {
+    const shuffled = [...currentDeck].sort(() => Math.random() - 0.5);
+    const nextHands = {};
+
+    players.forEach((player, playerIndex) => {
+      nextHands[player.id] = [];
+
+      for (let i = 0; i < cardsEach; i += 1) {
+        const card = shuffled[playerIndex * cardsEach + i];
+        if (card) nextHands[player.id].push(card);
+      }
+    });
+
+    setHands(nextHands);
+    if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
   }
 
   function addCard() {
@@ -501,19 +602,6 @@ export default function App() {
     }, 600);
   }
 
-  function drawPlayingCard() {
-    setCardFlipping(true);
-
-    setTimeout(() => {
-      const picked = standardDeck[Math.floor(Math.random() * standardDeck.length)];
-      setDrawnPlayingCard(picked);
-      setPlayingCardHistory((old) => [{ id: Date.now(), text: picked.label }, ...old.slice(0, 14)]);
-      setCardFlipping(false);
-
-      if (navigator.vibrate) navigator.vibrate([70, 40, 70]);
-    }, 600);
-  }
-
   function removeCustomCard(cardIndex) {
     setCustomCards((current) => current.filter((_, index) => index !== cardIndex));
   }
@@ -524,6 +612,7 @@ export default function App() {
     setDrawnPlayingCard(null);
     setCustomCardHistory([]);
     setPlayingCardHistory([]);
+    setHands({});
   }
 
   function addRandomItem() {
@@ -566,12 +655,48 @@ export default function App() {
     }));
   }
 
-  function DiceCompact() {
+  function startNewHangman() {
+    const word = hangmanWords[Math.floor(Math.random() * hangmanWords.length)];
+    setSecretWord(word);
+    setLetters([]);
+  }
+
+  function guessLetter(letter) {
+    if (!letters.includes(letter)) {
+      setLetters((current) => [...current, letter]);
+    }
+  }
+
+  const displayedWord = secretWord
+    .split("")
+    .map((letter) => (letters.includes(letter) ? letter : "_"))
+    .join(" ");
+
+  const mistakes = letters.filter((letter) => !secretWord.includes(letter)).length;
+
+  function TableDiceWidget() {
     return (
       <div className="tableWidget">
         <div className="widgetHeader">
           <Dice6 size={20} />
           <strong>{t.dice}</strong>
+        </div>
+
+        <div className="diceSelector compactSelect">
+          {diceTypes.map((die) => (
+            <button key={die} className={selectedDie === die ? "selected" : ""} onClick={() => setSelectedDie(die)}>
+              D{die}
+            </button>
+          ))}
+        </div>
+
+        <div className="controlCard smallControl">
+          <span>{t.numberDice}</span>
+          <div className="stepper">
+            <button onClick={() => setDiceCount(Math.max(1, diceCount - 1))}><Minus size={16} /></button>
+            <strong>{diceCount}</strong>
+            <button onClick={() => setDiceCount(Math.min(12, diceCount + 1))}><Plus size={16} /></button>
+          </div>
         </div>
 
         <div className="compactDiceLine">
@@ -587,7 +712,7 @@ export default function App() {
     );
   }
 
-  function TimerCompact() {
+  function TableTimerWidget() {
     return (
       <div className="tableWidget">
         <div className="widgetHeader">
@@ -597,6 +722,14 @@ export default function App() {
 
         <div className="compactTimer">{minutes}:{remainingSeconds}</div>
 
+        <div className="presetGrid compactSelect">
+          {[30, 60, 120, 300].map((preset) => (
+            <button key={preset} onClick={() => { setSeconds(preset); setTimerRunning(false); }}>
+              {preset < 60 ? `${preset}s` : `${preset / 60}m`}
+            </button>
+          ))}
+        </div>
+
         <button className="miniAction" onClick={() => setTimerRunning((v) => !v)}>
           {timerRunning ? t.pauseTimer : t.startTimer}
         </button>
@@ -604,7 +737,7 @@ export default function App() {
     );
   }
 
-  function ScoreCompact() {
+  function TableScoreWidget() {
     return (
       <div className="tableWidget">
         <div className="widgetHeader">
@@ -613,10 +746,14 @@ export default function App() {
         </div>
 
         <div className="compactPlayers">
-          {players.slice(0, 4).map((player) => (
+          {players.map((player) => (
             <div key={player.id}>
               <span>{player.name}</span>
-              <strong>{player.score}</strong>
+              <div className="miniScoreButtons">
+                <button onClick={() => changePlayerScore(player.id, -1)}><Minus size={14} /></button>
+                <strong>{player.score}</strong>
+                <button onClick={() => changePlayerScore(player.id, 1)}><Plus size={14} /></button>
+              </div>
             </div>
           ))}
         </div>
@@ -624,7 +761,7 @@ export default function App() {
     );
   }
 
-  function CardsCompact() {
+  function TableCardsWidget() {
     return (
       <div className="tableWidget">
         <div className="widgetHeader">
@@ -632,14 +769,43 @@ export default function App() {
           <strong>{t.cards}</strong>
         </div>
 
-        <PlayingCard card={drawnPlayingCard || { rank: "?", suit: "★", color: "black" }} flipping={cardFlipping} />
+        <div className="cardModeTabs smallTabs">
+          <button className={cardMode === "standard" ? "active" : ""} onClick={() => setCardMode("standard")}>{t.standardDeck}</button>
+          <button className={cardMode === "custom" ? "active" : ""} onClick={() => setCardMode("custom")}>{t.customDeck}</button>
+        </div>
 
-        <button className="miniAction" onClick={drawPlayingCard}>{t.drawCard}</button>
+        {cardMode === "standard" && (
+          <>
+            <div className="tableCardControls">
+              <label>{t.decksCount}</label>
+              <select value={deckCount} onChange={(e) => setDeckCount(Number(e.target.value))}>
+                {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => <option key={n} value={n}>{n}</option>)}
+              </select>
+
+              <button className={includeJokers ? "toggleOn" : ""} onClick={() => setIncludeJokers((v) => !v)}>
+                {t.jokers}
+              </button>
+            </div>
+
+            <PlayingCard card={drawnPlayingCard || { rank: "?", suit: "★", color: "black" }} flipping={cardFlipping} />
+            <button className="miniAction" onClick={drawPlayingCard}>{t.drawCard}</button>
+          </>
+        )}
+
+        {cardMode === "custom" && (
+          <>
+            <div className={`eventCard tableEventCard ${cardFlipping ? "cardFlip" : ""}`}>
+              <span>{t.customDeck}</span>
+              <strong>{drawnCustomCard || "?"}</strong>
+            </div>
+            <button className="miniAction" onClick={drawCustomCard}>{t.drawCard}</button>
+          </>
+        )}
       </div>
     );
   }
 
-  function BankCompact() {
+  function TableBankWidget() {
     return (
       <div className="tableWidget">
         <div className="widgetHeader">
@@ -647,11 +813,32 @@ export default function App() {
           <strong>{t.bank}</strong>
         </div>
 
+        <div className="bankTransferCard compactBank">
+          <label>{t.amount}</label>
+          <input type="number" value={bankAmount} onChange={(e) => setBankAmount(e.target.value)} />
+
+          <label>{t.from}</label>
+          <select value={bankFrom} onChange={(e) => setBankFrom(e.target.value)}>
+            {players.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+          </select>
+
+          <label>{t.to}</label>
+          <select value={bankTo} onChange={(e) => setBankTo(e.target.value)}>
+            {players.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+          </select>
+
+          <button className="miniAction" onClick={transferMoney}><ArrowLeftRight size={16} />{t.transfer}</button>
+        </div>
+
         <div className="compactPlayers">
-          {players.slice(0, 4).map((player) => (
+          {players.map((player) => (
             <div key={player.id}>
               <span>{player.name}</span>
-              <strong>${player.money || 0}</strong>
+              <div className="miniScoreButtons">
+                <button onClick={() => changeMoney(player.id, -Number(bankAmount))}><Minus size={14} /></button>
+                <strong>${player.money || 0}</strong>
+                <button onClick={() => changeMoney(player.id, Number(bankAmount))}><Plus size={14} /></button>
+              </div>
             </div>
           ))}
         </div>
@@ -659,7 +846,7 @@ export default function App() {
     );
   }
 
-  function RandomizerCompact() {
+  function TableRandomizerWidget() {
     return (
       <div className="tableWidget">
         <div className="widgetHeader">
@@ -667,15 +854,21 @@ export default function App() {
           <strong>{t.randomizer}</strong>
         </div>
 
-        <div className="compactResult">{randomResult || "—"}</div>
+        <div className="compactWheelWrap">
+          <div className="wheelNeedle"></div>
+          <div className="wheel smallWheel" style={{ transform: `rotate(${wheelRotation}deg)` }}>
+            <div className="wheelCenter"><Sparkles size={28} /></div>
+          </div>
+        </div>
 
+        <div className="compactResult">{randomResult || "—"}</div>
         <button className="miniAction" onClick={spinWheel}>{t.spinWheel}</button>
       </div>
     );
   }
 
   return (
-    <div className="app">
+    <div className={`app theme-${theme}`}>
       <div className="backgroundGlow backgroundGlowOne"></div>
       <div className="backgroundGlow backgroundGlowTwo"></div>
 
@@ -687,22 +880,18 @@ export default function App() {
 
         {activeTab === "home" && (
           <section className="hero">
-            <div className="premiumBadge">
-              Offline PWA • {isPremium ? t.premiumUnlocked : "Premium Game Tools"}
-            </div>
+            <div className="mascot">🎲</div>
+            <div className="premiumBadge">Offline PWA • {isPremium ? t.premiumUnlocked : "Premium Game Tools"}</div>
 
             <h1>{t.title}</h1>
             <p>{t.hero}</p>
 
-            <button className="heroButton" onClick={() => setActiveTab("table")}>
-              {t.rescue}
-            </button>
+            <button className="heroButton" onClick={() => setActiveTab("table")}>{t.rescue}</button>
 
             <div className="homeGrid">
               <button className="homeTile" onClick={() => setActiveTab("dice")}><Dice6 size={38} /><span>{t.rollDice}</span></button>
-              <button className="homeTile" onClick={() => setActiveTab("timer")}><Timer size={38} /><span>{t.startTimer}</span></button>
-              <button className="homeTile" onClick={() => setActiveTab("score")}><Trophy size={38} /><span>{t.score}</span></button>
               <button className="homeTile" onClick={() => setActiveTab("table")}><LayoutGrid size={38} /><span>{t.table}</span></button>
+              <button className="homeTile" onClick={() => setActiveTab("score")}><Trophy size={38} /><span>{t.score}</span></button>
               <button className={`homeTile ${!isPremium ? "lockedTile" : ""}`} onClick={() => setActiveTab("premium")}><Gem size={38} /><span>{t.premium}</span></button>
             </div>
           </section>
@@ -755,33 +944,6 @@ export default function App() {
           </section>
         )}
 
-        {activeTab === "timer" && (
-          <section className="toolPage">
-            <div className="pageHeader">
-              <h2>{lang === "fr" ? "Minuteur de jeu" : "Game Timer"}</h2>
-              <p>{lang === "fr" ? "Préréglages rapides pour les tours et défis." : "Fast presets for turns and challenges."}</p>
-            </div>
-
-            <div className="timerOrb"><span>{minutes}</span><small>:</small><span>{remainingSeconds}</span></div>
-
-            <div className="presetGrid">
-              {[30, 60, 120, 300, 600].map((preset) => (
-                <button key={preset} onClick={() => { setSeconds(preset); setTimerRunning(false); }}>
-                  {preset < 60 ? `${preset}s` : `${preset / 60}m`}
-                </button>
-              ))}
-            </div>
-
-            <button className="primaryAction" onClick={() => setTimerRunning((v) => !v)}>
-              {timerRunning ? t.pauseTimer : t.startTimer}
-            </button>
-
-            <button className="secondaryAction" onClick={() => { setTimerRunning(false); setSeconds(300); }}>
-              <RotateCcw size={18} />{t.reset}
-            </button>
-          </section>
-        )}
-
         {activeTab === "score" && (
           <section className="toolPage">
             <div className="pageHeader">
@@ -826,11 +988,7 @@ export default function App() {
                   ["bank", t.bank],
                   ["randomizer", t.randomizer]
                 ].map(([key, label]) => (
-                  <button
-                    key={key}
-                    className={tableTools[key] ? "active" : ""}
-                    onClick={() => toggleTableTool(key)}
-                  >
+                  <button key={key} className={tableTools[key] ? "active" : ""} onClick={() => toggleTableTool(key)}>
                     {label}
                   </button>
                 ))}
@@ -838,12 +996,12 @@ export default function App() {
             </div>
 
             <div className="gameTableGrid">
-              {tableTools.dice && <DiceCompact />}
-              {tableTools.timer && <TimerCompact />}
-              {tableTools.score && <ScoreCompact />}
-              {tableTools.cards && <CardsCompact />}
-              {tableTools.bank && <BankCompact />}
-              {tableTools.randomizer && <RandomizerCompact />}
+              {tableTools.dice && <TableDiceWidget />}
+              {tableTools.timer && <TableTimerWidget />}
+              {tableTools.score && <TableScoreWidget />}
+              {tableTools.cards && <TableCardsWidget />}
+              {tableTools.bank && <TableBankWidget />}
+              {tableTools.randomizer && <TableRandomizerWidget />}
             </div>
           </section>
         )}
@@ -852,7 +1010,7 @@ export default function App() {
           <section className="toolPage">
             <div className="pageHeader">
               <h2>{t.premiumTitle}</h2>
-              <p>{isPremium ? t.premiumUnlocked : lang === "fr" ? "Banque, cartes, randomizer, kits et thèmes sont verrouillés." : "Bank, cards, randomizer, kits and themes are locked."}</p>
+              <p>{isPremium ? t.premiumUnlocked : lang === "fr" ? "Banque, cartes, randomizer, kits, mini jeux et thèmes sont verrouillés." : "Bank, cards, randomizer, kits, mini games and themes are locked."}</p>
             </div>
 
             {!isPremium && (
@@ -860,8 +1018,8 @@ export default function App() {
                 <div className="premiumGrid">
                   <div className="premiumCard"><Wallet size={42} /><h3>{t.bankTitle}</h3><p>{t.bankDesc}</p><span>{t.locked}</span></div>
                   <div className="premiumCard"><CreditCard size={42} /><h3>{t.cards}</h3><p>{lang === "fr" ? "Cartes standard, jokers et cartes événement custom." : "Standard cards, jokers and custom event cards."}</p><span>{t.locked}</span></div>
-                  <div className="premiumCard"><Shuffle size={42} /><h3>{t.randomizer}</h3><p>{lang === "fr" ? "Roue avec aiguille, joueurs autour du cercle et tirage animé." : "Needle wheel, players around the circle and animated picks."}</p><span>{t.locked}</span></div>
-                  <div className="premiumCard"><Castle size={42} /><h3>{t.kits}</h3><p>{lang === "fr" ? "Kits inspirés de grands styles de jeux, sans noms protégés." : "Kits inspired by major game styles, without protected names."}</p><span>{t.locked}</span></div>
+                  <div className="premiumCard"><Palette size={42} /><h3>{t.themes}</h3><p>{lang === "fr" ? "Skins visuels premium, chalet, casino, futuriste et plus." : "Premium skins: cabin, casino, future and more."}</p><span>{t.locked}</span></div>
+                  <div className="premiumCard"><Gamepad2 size={42} /><h3>{t.miniGames}</h3><p>{lang === "fr" ? "Mini jeux tactiles offline." : "Offline tactile mini games."}</p><span>{t.locked}</span></div>
                 </div>
 
                 <button className="primaryAction" onClick={() => setIsPremium(true)}>{t.unlockPremium}</button>
@@ -875,6 +1033,8 @@ export default function App() {
                   <button className={premiumTool === "cards" ? "active" : ""} onClick={() => setPremiumTool("cards")}><CreditCard size={18} />{t.cards}</button>
                   <button className={premiumTool === "randomizer" ? "active" : ""} onClick={() => setPremiumTool("randomizer")}><Sparkles size={18} />{t.randomizer}</button>
                   <button className={premiumTool === "kits" ? "active" : ""} onClick={() => setPremiumTool("kits")}><Castle size={18} />{t.kits}</button>
+                  <button className={premiumTool === "themes" ? "active" : ""} onClick={() => setPremiumTool("themes")}><Palette size={18} />{t.themes}</button>
+                  <button className={premiumTool === "mini" ? "active" : ""} onClick={() => setPremiumTool("mini")}><Gamepad2 size={18} />{t.miniGames}</button>
                 </div>
 
                 {premiumTool === "bank" && (
@@ -884,34 +1044,7 @@ export default function App() {
                       <div><h3>{t.bankTitle}</h3><p>{t.bankDesc}</p></div>
                     </div>
 
-                    <div className="bankPlayers">
-                      {players.map((player) => (
-                        <div className="bankPlayerCard" key={player.id}>
-                          <div><strong>{player.name}</strong><span>${player.money || 0}</span></div>
-                          <div className="bankButtons">
-                            <button onClick={() => changeMoney(player.id, Number(bankAmount))}><Plus size={16} /></button>
-                            <button onClick={() => changeMoney(player.id, -Number(bankAmount))}><Minus size={16} /></button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="bankTransferCard">
-                      <label>{t.amount}</label>
-                      <input type="number" value={bankAmount} onChange={(e) => setBankAmount(e.target.value)} />
-
-                      <label>{t.from}</label>
-                      <select value={bankFrom} onChange={(e) => setBankFrom(e.target.value)}>
-                        {players.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-                      </select>
-
-                      <label>{t.to}</label>
-                      <select value={bankTo} onChange={(e) => setBankTo(e.target.value)}>
-                        {players.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-                      </select>
-
-                      <button className="primaryAction" onClick={transferMoney}><ArrowLeftRight size={18} />{t.transfer}</button>
-                    </div>
+                    <TableBankWidget />
 
                     <button className="secondaryAction" onClick={resetBank}><RotateCcw size={18} />{t.resetBank}</button>
 
@@ -932,15 +1065,42 @@ export default function App() {
 
                     {cardMode === "standard" && (
                       <>
+                        <div className="presetGrid">
+                          {cardPresets.map((preset) => (
+                            <button key={preset.id} onClick={() => applyCardPreset(preset)}>
+                              {preset.label}
+                            </button>
+                          ))}
+                        </div>
+
+                        <div className="bankTransferCard">
+                          <label>{t.decksCount}</label>
+                          <select value={deckCount} onChange={(e) => setDeckCount(Number(e.target.value))}>
+                            {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => <option key={n} value={n}>{n}</option>)}
+                          </select>
+
+                          <label>{t.cardsEach}</label>
+                          <input type="number" value={cardsEach} onChange={(e) => setCardsEach(Number(e.target.value))} />
+
+                          <button className={includeJokers ? "secondaryAction toggleOn" : "secondaryAction"} onClick={() => setIncludeJokers((v) => !v)}>
+                            {t.jokers}
+                          </button>
+
+                          <button className="primaryAction" onClick={dealCards}>{t.dealCards}</button>
+                        </div>
+
                         <div className="cardsHero">
                           <PlayingCard card={drawnPlayingCard || { rank: "?", suit: "★", color: "black" }} flipping={cardFlipping} />
                           <button className="primaryAction" onClick={drawPlayingCard}>{t.drawCard}</button>
                         </div>
 
-                        <div className="historyList">
-                          <h3>{t.drawnCards}</h3>
-                          {playingCardHistory.length === 0 && <div className="historyItem"><span>{t.noHistory}</span></div>}
-                          {playingCardHistory.map((item) => <div className="historyItem" key={item.id}><span>{item.text}</span></div>)}
+                        <div className="handsGrid">
+                          {players.map((player) => (
+                            <div className="handCard" key={player.id}>
+                              <strong>{player.name}</strong>
+                              <span>{(hands[player.id] || []).map((card) => card.label).join(" • ") || "—"}</span>
+                            </div>
+                          ))}
                         </div>
                       </>
                     )}
@@ -949,7 +1109,7 @@ export default function App() {
                       <>
                         <div className="cardsHero">
                           <div className={`eventCard ${cardFlipping ? "cardFlip" : ""}`}>
-                            <span>{lang === "fr" ? "Carte événement" : "Event Card"}</span>
+                            <span>{t.customDeck}</span>
                             <strong>{drawnCustomCard || "?"}</strong>
                           </div>
                           <button className="primaryAction" onClick={drawCustomCard}>{t.drawCard}</button>
@@ -966,20 +1126,14 @@ export default function App() {
                           {customCards.map((card, index) => (
                             <div className="deckItem" key={`${card}-${index}`}>
                               <span>{card}</span>
-                              <button onClick={() => removeCustomCard(index)}><Minus size={16} /></button>
+                              <button onClick={() => removeCustomCard(index)}><Trash2 size={16} /></button>
                             </div>
                           ))}
                         </div>
-
-                        <button className="secondaryAction" onClick={resetDeck}><RotateCcw size={18} />{t.resetDeck}</button>
-
-                        <div className="historyList">
-                          <h3>{t.drawnCards}</h3>
-                          {customCardHistory.length === 0 && <div className="historyItem"><span>{t.noHistory}</span></div>}
-                          {customCardHistory.map((item) => <div className="historyItem" key={item.id}><span>{item.text}</span></div>)}
-                        </div>
                       </>
                     )}
+
+                    <button className="secondaryAction" onClick={resetDeck}><RotateCcw size={18} />{t.resetDeck}</button>
                   </>
                 )}
 
@@ -988,15 +1142,11 @@ export default function App() {
                     <div className="wheelShell">
                       <div className="wheelNeedle"></div>
 
-                      <div className={`wheel ${spinningWheel ? "wheelSpin" : ""}`} style={{ transform: `rotate(${wheelRotation}deg)` }}>
+                      <div className="wheel" style={{ transform: `rotate(${wheelRotation}deg)` }}>
                         {randomItems.map((item, index) => {
                           const angle = (360 / randomItems.length) * index;
                           return (
-                            <span
-                              key={`${item}-${index}`}
-                              className="wheelLabel"
-                              style={{ transform: `rotate(${angle}deg) translateY(-103px) rotate(${-angle}deg)` }}
-                            >
+                            <span key={`${item}-${index}`} className="wheelLabel" style={{ transform: `rotate(${angle}deg) translateY(-103px) rotate(${-angle}deg)` }}>
                               {item}
                             </span>
                           );
@@ -1026,7 +1176,7 @@ export default function App() {
                       {randomItems.map((item, index) => (
                         <div className="deckItem" key={`${item}-${index}`}>
                           <span>{item}</span>
-                          <button onClick={() => removeRandomItem(index)}><Minus size={16} /></button>
+                          <button onClick={() => removeRandomItem(index)}><Trash2 size={16} /></button>
                         </div>
                       ))}
                     </div>
@@ -1037,6 +1187,7 @@ export default function App() {
                   <div className="kitsGrid">
                     {gameKits.map((kit) => {
                       const Icon = kit.icon;
+
                       return (
                         <div className="kitCard" key={kit.id}>
                           <div className="kitIcon"><Icon size={36} /></div>
@@ -1048,6 +1199,43 @@ export default function App() {
                     })}
                   </div>
                 )}
+
+                {premiumTool === "themes" && (
+                  <>
+                    <div className="pageHeader">
+                      <h2>{t.chooseTheme}</h2>
+                    </div>
+
+                    <div className="themesGrid">
+                      {themes.map((item) => (
+                        <button key={item.id} className={`themeCard themePreview-${item.id} ${theme === item.id ? "active" : ""}`} onClick={() => setTheme(item.id)}>
+                          <span>{item.name}</span>
+                          {item.premium && <small>Premium</small>}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+
+                {premiumTool === "mini" && (
+                  <>
+                    <div className="miniGameCard">
+                      <h3>{t.hangman}</h3>
+                      <div className="hangmanWord">{displayedWord}</div>
+                      <div className="hangmanMistakes">Mistakes: {mistakes}/6</div>
+
+                      <div className="letterGrid">
+                        {"ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map((letter) => (
+                          <button key={letter} className={letters.includes(letter) ? "used" : ""} onClick={() => guessLetter(letter)}>
+                            {letter}
+                          </button>
+                        ))}
+                      </div>
+
+                      <button className="secondaryAction" onClick={startNewHangman}><RotateCcw size={18} />{t.newWord}</button>
+                    </div>
+                  </>
+                )}
               </>
             )}
           </section>
@@ -1057,6 +1245,7 @@ export default function App() {
       <nav className="bottomNav">
         {tabs.map((tab) => {
           const Icon = tab.icon;
+
           return (
             <button key={tab.id} className={activeTab === tab.id ? "active" : ""} onClick={() => setActiveTab(tab.id)}>
               <Icon size={22} />
@@ -1067,4 +1256,4 @@ export default function App() {
       </nav>
     </div>
   );
-          }
+}
