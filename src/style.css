@@ -443,3 +443,120 @@ body {
     grid-template-columns: repeat(4, 1fr);
   }
 }
+
+.topBar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.topBar button {
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.08);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-weight: 800;
+}
+
+.topBar .langActive {
+  background: linear-gradient(135deg, #facc15, #f97316);
+  color: #111827;
+}
+
+.diceTable {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin: 18px 0;
+  min-height: 120px;
+}
+
+.realDie {
+  width: 74px;
+  height: 74px;
+  background: linear-gradient(145deg, #ffffff, #dbeafe);
+  border-radius: 18px;
+  box-shadow: 0 14px 28px rgba(0,0,0,0.35), inset -8px -8px 14px rgba(0,0,0,0.12);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  padding: 12px;
+  transform: rotate(-4deg);
+}
+
+.realDie i {
+  width: 12px;
+  height: 12px;
+  background: #111827;
+  border-radius: 999px;
+  align-self: center;
+  justify-self: center;
+  opacity: 0;
+}
+
+.face1 i:nth-child(5),
+.face2 i:nth-child(1),
+.face2 i:nth-child(9),
+.face3 i:nth-child(1),
+.face3 i:nth-child(5),
+.face3 i:nth-child(9),
+.face4 i:nth-child(1),
+.face4 i:nth-child(3),
+.face4 i:nth-child(7),
+.face4 i:nth-child(9),
+.face5 i:nth-child(1),
+.face5 i:nth-child(3),
+.face5 i:nth-child(5),
+.face5 i:nth-child(7),
+.face5 i:nth-child(9),
+.face6 i:nth-child(1),
+.face6 i:nth-child(3),
+.face6 i:nth-child(4),
+.face6 i:nth-child(6),
+.face6 i:nth-child(7),
+.face6 i:nth-child(9) {
+  opacity: 1;
+}
+
+.polyDie {
+  width: 78px;
+  height: 78px;
+  background: linear-gradient(145deg, #facc15, #f97316);
+  color: #111827;
+  clip-path: polygon(50% 0%, 95% 28%, 82% 100%, 18% 100%, 5% 28%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 14px 18px rgba(0,0,0,0.35));
+}
+
+.polyDie span {
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.polyDie strong {
+  font-size: 28px;
+  font-weight: 1000;
+}
+
+.rolling {
+  animation: diceRoll 0.65s ease-in-out infinite;
+}
+
+@keyframes diceRoll {
+  0% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(90deg) scale(1.12); }
+  50% { transform: rotate(180deg) scale(0.95); }
+  75% { transform: rotate(270deg) scale(1.12); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+
+.unlockedCard {
+  border-color: rgba(250, 204, 21, 0.7);
+  box-shadow: 0 0 28px rgba(250, 204, 21, 0.22);
+}
