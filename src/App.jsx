@@ -20,7 +20,10 @@ const TEXT = {
     randomizer: "Randomizer", randomizerDesc: "Animated wheel and custom random selections.",
     addMoney: "Add", removeMoney: "Remove", transfer: "Transfer",
     amount: "Amount", from: "From", to: "To", history: "History",
-    resetBank: "Reset Bank", noHistory: "No transactions yet."
+    resetBank: "Reset Bank", noHistory: "No transactions yet.",
+    bank: "Bank", cardTool: "Cards", addCard: "Add Card", drawCard: "Draw Card",
+    cardName: "Card name", deck: "Deck", lastDraw: "Last draw",
+    resetDeck: "Reset Deck", noCards: "No cards yet.", drawnCards: "Drawn cards"
   },
   fr: {
     home: "Accueil", dice: "Dés", timer: "Minuteur", score: "Score", premium: "Premium",
@@ -37,11 +40,25 @@ const TEXT = {
     randomizer: "Randomizer", randomizerDesc: "Roue animée et sélections aléatoires.",
     addMoney: "Ajouter", removeMoney: "Retirer", transfer: "Transférer",
     amount: "Montant", from: "De", to: "À", history: "Historique",
-    resetBank: "Réinitialiser la banque", noHistory: "Aucune transaction."
+    resetBank: "Réinitialiser la banque", noHistory: "Aucune transaction.",
+    bank: "Banque", cardTool: "Cartes", addCard: "Ajouter une carte", drawCard: "Tirer une carte",
+    cardName: "Nom de la carte", deck: "Paquet", lastDraw: "Dernier tirage",
+    resetDeck: "Réinitialiser le paquet", noCards: "Aucune carte.", drawnCards: "Cartes tirées"
   }
 };
 
 const diceTypes = [4, 6, 8, 10, 12, 20];
+
+const defaultCards = [
+  "Skip turn",
+  "Play again",
+  "Draw two cards",
+  "Trade places",
+  "Lose 100",
+  "Win 100",
+  "Go back 3 spaces",
+  "Move forward 5 spaces"
+];
 
 function randomRoll(sides) {
   return Math.floor(Math.random() * sides) + 1;
@@ -67,6 +84,7 @@ function DiceFace({ value, sides, rolling }) {
 export default function App() {
   const [lang, setLang] = useState(() => localStorage.getItem("bgh_lang") || "en");
   const [isPremium, setIsPremium] = useState(() => localStorage.getItem("bgh_premium") === "true");
+  const [premiumTool, setPremiumTool] = useState("bank");
   const t = TEXT[lang];
 
   const tabs = [
@@ -104,15 +122,30 @@ export default function App() {
     return saved ? JSON.parse(saved) : [];
   });
 
+  const [cards, setCards] = useState(() => {
+    const saved = localStorage.getItem("bgh_cards");
+    return saved ? JSON.parse(saved) : defaultCards;
+  });
+  const [newCard, setNewCard] = useState("");
+  const [drawnCard, setDrawnCard] = useState(null);
+  const [cardFlipping, setCardFlipping] = useState(false);
+  const [cardHistory, setCardHistory] = useState(() => {
+    const saved = localStorage.getItem("bgh_card_history");
+    return saved ? JSON.parse(saved) : [];
+  });
+
   useEffect(() => localStorage.setItem("bgh_lang", lang), [lang]);
   useEffect(() => localStorage.setItem("bgh_premium", String(isPremium)), [isPremium]);
   useEffect(() => localStorage.setItem("bgh_players", JSON.stringify(players)), [players]);
   useEffect(() => localStorage.setItem("bgh_bank_history", JSON.stringify(bankHistory)), [bankHistory]);
+  useEffect(() => localStorage.setItem("bgh_cards", JSON.stringify(cards)), [cards]);
+  useEffect(() => localStorage.setItem("bgh_card_history", JSON.stringify(cardHistory)), [cardHistory]);
 
   const totalRoll = useMemo(() => rolls.reduce((sum, value) => sum + value, 0), [rolls]);
 
   useEffect(() => {
     if (!timerRunning) return;
+
     timerRef.current = setInterval(() => {
       setSeconds((current) => {
         if (current <= 1) {
@@ -124,6 +157,7 @@ export default function App() {
         return current - 1;
       });
     }, 1000);
+
     return () => clearInterval(timerRef.current);
   }, [timerRunning]);
 
@@ -133,26 +167,42 @@ export default function App() {
   function handleRoll() {
     setRolling(true);
     if (navigator.vibrate) navigator.vibrate(80);
+
     let ticks = 0;
     const animation = setInterval(() => {
       setRolls(Array.from({ length: diceCount }, () => randomRoll(selectedDie)));
       ticks += 1;
+
       if (ticks >= 8) {
         clearInterval(animation);
         const newRolls = Array.from({ length: diceCount }, () => randomRoll(selectedDie));
         setRolls(newRolls);
-        setHistory((old) => [{ id: Date.now(), die: selectedDie, count: diceCount, rolls: newRolls, total: newRolls.reduce((s, v) => s + v, 0) }, ...old.slice(0, 9)]);
+        setHistory((old) => [
+          {
+            id: Date.now(),
+            die: selectedDie,
+            count: diceCount,
+            rolls: newRolls,
+            total: newRolls.reduce((s, v) => s + v, 0)
+          },
+          ...old.slice(0, 9)
+        ]);
         setRolling(false);
       }
     }, 90);
   }
 
   function changePlayerScore(playerId, amount) {
-    setPlayers((current) => current.map((p) => p.id === playerId ? { ...p, score: p.score + amount } : p));
+    setPlayers((current) =>
+      current.map((p) => p.id === playerId ? { ...p, score: p.score + amount } : p)
+    );
   }
 
   function addPlayer() {
-    setPlayers((current) => [...current, { id: Date.now(), name: `Player ${current.length + 1}`, score: 0, money: 1500 }]);
+    setPlayers((current) => [
+      ...current,
+      { id: Date.now(), name: `Player ${current.length + 1}`, score: 0, money: 1500 }
+    ]);
   }
 
   function resetScores() {
@@ -165,7 +215,11 @@ export default function App() {
 
   function changeMoney(playerId, amount) {
     const player = players.find((p) => p.id === playerId);
-    setPlayers((current) => current.map((p) => p.id === playerId ? { ...p, money: Math.max(0, (p.money || 0) + amount) } : p));
+    setPlayers((current) =>
+      current.map((p) =>
+        p.id === playerId ? { ...p, money: Math.max(0, (p.money || 0) + amount) } : p
+      )
+    );
     addBankHistory(`${amount > 0 ? "+" : ""}${amount} → ${player?.name}`);
   }
 
@@ -192,6 +246,41 @@ export default function App() {
   function resetBank() {
     setPlayers((current) => current.map((p) => ({ ...p, money: 1500 })));
     setBankHistory([]);
+  }
+
+  function addCard() {
+    const cleanCard = newCard.trim();
+    if (!cleanCard) return;
+
+    setCards((current) => [...current, cleanCard]);
+    setNewCard("");
+
+    if (navigator.vibrate) navigator.vibrate(40);
+  }
+
+  function drawCard() {
+    if (cards.length === 0) return;
+
+    setCardFlipping(true);
+
+    setTimeout(() => {
+      const picked = cards[Math.floor(Math.random() * cards.length)];
+      setDrawnCard(picked);
+      setCardHistory((old) => [{ id: Date.now(), text: picked }, ...old.slice(0, 14)]);
+      setCardFlipping(false);
+
+      if (navigator.vibrate) navigator.vibrate([70, 40, 70]);
+    }, 600);
+  }
+
+  function removeCard(cardIndex) {
+    setCards((current) => current.filter((_, index) => index !== cardIndex));
+  }
+
+  function resetDeck() {
+    setCards(defaultCards);
+    setDrawnCard(null);
+    setCardHistory([]);
   }
 
   return (
@@ -223,21 +312,68 @@ export default function App() {
 
         {activeTab === "dice" && (
           <section className="toolPage">
-            <div className="pageHeader"><h2>{lang === "fr" ? "Lanceur de dés réaliste" : "Realistic Dice Roller"}</h2><p>{lang === "fr" ? "Choisis tes dés, lance plusieurs dés à la fois et garde l’historique." : "Choose dice, roll multiple at once, and keep history."}</p></div>
-            <div className="diceTable">{rolls.map((value, index) => <DiceFace key={`${index}-${value}-${rolling}`} value={value} sides={selectedDie} rolling={rolling} />)}</div>
-            <div className="resultPanel"><span>{t.total}</span><strong>{totalRoll}</strong><small>{rolls.join(" + ")}</small></div>
-            <div className="diceSelector">{diceTypes.map((die) => <button key={die} className={selectedDie === die ? "selected" : ""} onClick={() => setSelectedDie(die)}>D{die}</button>)}</div>
-            <div className="controlCard"><span>{t.numberDice}</span><div className="stepper"><button onClick={() => setDiceCount(Math.max(1, diceCount - 1))}><Minus size={18} /></button><strong>{diceCount}</strong><button onClick={() => setDiceCount(Math.min(12, diceCount + 1))}><Plus size={18} /></button></div></div>
+            <div className="pageHeader">
+              <h2>{lang === "fr" ? "Lanceur de dés réaliste" : "Realistic Dice Roller"}</h2>
+              <p>{lang === "fr" ? "Choisis tes dés, lance plusieurs dés à la fois et garde l’historique." : "Choose dice, roll multiple at once, and keep history."}</p>
+            </div>
+
+            <div className="diceTable">
+              {rolls.map((value, index) => (
+                <DiceFace key={`${index}-${value}-${rolling}`} value={value} sides={selectedDie} rolling={rolling} />
+              ))}
+            </div>
+
+            <div className="resultPanel">
+              <span>{t.total}</span>
+              <strong>{totalRoll}</strong>
+              <small>{rolls.join(" + ")}</small>
+            </div>
+
+            <div className="diceSelector">
+              {diceTypes.map((die) => (
+                <button key={die} className={selectedDie === die ? "selected" : ""} onClick={() => setSelectedDie(die)}>D{die}</button>
+              ))}
+            </div>
+
+            <div className="controlCard">
+              <span>{t.numberDice}</span>
+              <div className="stepper">
+                <button onClick={() => setDiceCount(Math.max(1, diceCount - 1))}><Minus size={18} /></button>
+                <strong>{diceCount}</strong>
+                <button onClick={() => setDiceCount(Math.min(12, diceCount + 1))}><Plus size={18} /></button>
+              </div>
+            </div>
+
             <button className="primaryAction" onClick={handleRoll}>{t.rollDice}</button>
-            <div className="historyList">{history.map((item) => <div className="historyItem" key={item.id}><span>{item.count} × D{item.die} — {item.rolls.join(" + ")}</span><strong>{item.total}</strong></div>)}</div>
+
+            <div className="historyList">
+              {history.map((item) => (
+                <div className="historyItem" key={item.id}>
+                  <span>{item.count} × D{item.die} — {item.rolls.join(" + ")}</span>
+                  <strong>{item.total}</strong>
+                </div>
+              ))}
+            </div>
           </section>
         )}
 
         {activeTab === "timer" && (
           <section className="toolPage">
-            <div className="pageHeader"><h2>{lang === "fr" ? "Minuteur de jeu" : "Game Timer"}</h2><p>{lang === "fr" ? "Préréglages rapides pour les tours et défis." : "Fast presets for turns and challenges."}</p></div>
+            <div className="pageHeader">
+              <h2>{lang === "fr" ? "Minuteur de jeu" : "Game Timer"}</h2>
+              <p>{lang === "fr" ? "Préréglages rapides pour les tours et défis." : "Fast presets for turns and challenges."}</p>
+            </div>
+
             <div className="timerOrb"><span>{minutes}</span><small>:</small><span>{remainingSeconds}</span></div>
-            <div className="presetGrid">{[30, 60, 120, 300, 600].map((preset) => <button key={preset} onClick={() => { setSeconds(preset); setTimerRunning(false); }}>{preset < 60 ? `${preset}s` : `${preset / 60}m`}</button>)}</div>
+
+            <div className="presetGrid">
+              {[30, 60, 120, 300, 600].map((preset) => (
+                <button key={preset} onClick={() => { setSeconds(preset); setTimerRunning(false); }}>
+                  {preset < 60 ? `${preset}s` : `${preset / 60}m`}
+                </button>
+              ))}
+            </div>
+
             <button className="primaryAction" onClick={() => setTimerRunning((v) => !v)}>{timerRunning ? t.pauseTimer : t.startTimer}</button>
             <button className="secondaryAction" onClick={() => { setTimerRunning(false); setSeconds(300); }}><RotateCcw size={18} />{t.reset}</button>
           </section>
@@ -245,8 +381,24 @@ export default function App() {
 
         {activeTab === "score" && (
           <section className="toolPage">
-            <div className="pageHeader"><h2>{lang === "fr" ? "Tableau des scores" : "Scoreboard"}</h2><p>{lang === "fr" ? "Suis plusieurs joueurs avec plus et moins." : "Track multiple players with plus and minus controls."}</p></div>
-            <div className="playerList">{players.map((player) => <div className="playerCard" key={player.id}><div><strong>{player.name}</strong><span>{t.currentScore}</span></div><div className="scoreControls"><button onClick={() => changePlayerScore(player.id, -1)}><Minus size={18} /></button><b>{player.score}</b><button onClick={() => changePlayerScore(player.id, 1)}><Plus size={18} /></button></div></div>)}</div>
+            <div className="pageHeader">
+              <h2>{lang === "fr" ? "Tableau des scores" : "Scoreboard"}</h2>
+              <p>{lang === "fr" ? "Suis plusieurs joueurs avec plus et moins." : "Track multiple players with plus and minus controls."}</p>
+            </div>
+
+            <div className="playerList">
+              {players.map((player) => (
+                <div className="playerCard" key={player.id}>
+                  <div><strong>{player.name}</strong><span>{t.currentScore}</span></div>
+                  <div className="scoreControls">
+                    <button onClick={() => changePlayerScore(player.id, -1)}><Minus size={18} /></button>
+                    <b>{player.score}</b>
+                    <button onClick={() => changePlayerScore(player.id, 1)}><Plus size={18} /></button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
             <button className="primaryAction" onClick={addPlayer}>{t.addPlayer}</button>
             <button className="secondaryAction" onClick={resetScores}><RotateCcw size={18} />{t.resetScores}</button>
           </section>
@@ -266,61 +418,116 @@ export default function App() {
                   <div className="premiumCard"><CreditCard size={42} /><h3>{t.cards}</h3><p>{t.cardsDesc}</p><span>{t.locked}</span></div>
                   <div className="premiumCard"><Shuffle size={42} /><h3>{t.randomizer}</h3><p>{t.randomizerDesc}</p><span>{t.locked}</span></div>
                 </div>
+
                 <button className="primaryAction" onClick={() => setIsPremium(true)}>{t.unlockPremium}</button>
               </>
             )}
 
             {isPremium && (
               <>
-                <div className="bankHeader">
-                  <Wallet size={36} />
-                  <div>
-                    <h3>{t.bankTitle}</h3>
-                    <p>{t.bankDesc}</p>
-                  </div>
+                <div className="premiumToolTabs">
+                  <button className={premiumTool === "bank" ? "active" : ""} onClick={() => setPremiumTool("bank")}><Wallet size={18} />{t.bank}</button>
+                  <button className={premiumTool === "cards" ? "active" : ""} onClick={() => setPremiumTool("cards")}><CreditCard size={18} />{t.cardTool}</button>
                 </div>
 
-                <div className="bankPlayers">
-                  {players.map((player) => (
-                    <div className="bankPlayerCard" key={player.id}>
-                      <div>
-                        <strong>{player.name}</strong>
-                        <span>${player.money || 0}</span>
-                      </div>
-                      <div className="bankButtons">
-                        <button onClick={() => changeMoney(player.id, Number(bankAmount))}><Plus size={16} /></button>
-                        <button onClick={() => changeMoney(player.id, -Number(bankAmount))}><Minus size={16} /></button>
-                      </div>
+                {premiumTool === "bank" && (
+                  <>
+                    <div className="bankHeader">
+                      <Wallet size={36} />
+                      <div><h3>{t.bankTitle}</h3><p>{t.bankDesc}</p></div>
                     </div>
-                  ))}
-                </div>
 
-                <div className="bankTransferCard">
-                  <label>{t.amount}</label>
-                  <input type="number" value={bankAmount} onChange={(e) => setBankAmount(e.target.value)} />
+                    <div className="bankPlayers">
+                      {players.map((player) => (
+                        <div className="bankPlayerCard" key={player.id}>
+                          <div><strong>{player.name}</strong><span>${player.money || 0}</span></div>
+                          <div className="bankButtons">
+                            <button onClick={() => changeMoney(player.id, Number(bankAmount))}><Plus size={16} /></button>
+                            <button onClick={() => changeMoney(player.id, -Number(bankAmount))}><Minus size={16} /></button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
 
-                  <label>{t.from}</label>
-                  <select value={bankFrom} onChange={(e) => setBankFrom(e.target.value)}>
-                    {players.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-                  </select>
+                    <div className="bankTransferCard">
+                      <label>{t.amount}</label>
+                      <input type="number" value={bankAmount} onChange={(e) => setBankAmount(e.target.value)} />
 
-                  <label>{t.to}</label>
-                  <select value={bankTo} onChange={(e) => setBankTo(e.target.value)}>
-                    {players.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-                  </select>
+                      <label>{t.from}</label>
+                      <select value={bankFrom} onChange={(e) => setBankFrom(e.target.value)}>
+                        {players.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                      </select>
 
-                  <button className="primaryAction" onClick={transferMoney}>
-                    <ArrowLeftRight size={18} /> {t.transfer}
-                  </button>
-                </div>
+                      <label>{t.to}</label>
+                      <select value={bankTo} onChange={(e) => setBankTo(e.target.value)}>
+                        {players.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                      </select>
 
-                <button className="secondaryAction" onClick={resetBank}><RotateCcw size={18} />{t.resetBank}</button>
+                      <button className="primaryAction" onClick={transferMoney}><ArrowLeftRight size={18} /> {t.transfer}</button>
+                    </div>
 
-                <div className="historyList">
-                  <h3>{t.history}</h3>
-                  {bankHistory.length === 0 && <div className="historyItem"><span>{t.noHistory}</span></div>}
-                  {bankHistory.map((item) => <div className="historyItem" key={item.id}><span>{item.text}</span></div>)}
-                </div>
+                    <button className="secondaryAction" onClick={resetBank}><RotateCcw size={18} />{t.resetBank}</button>
+
+                    <div className="historyList">
+                      <h3>{t.history}</h3>
+                      {bankHistory.length === 0 && <div className="historyItem"><span>{t.noHistory}</span></div>}
+                      {bankHistory.map((item) => <div className="historyItem" key={item.id}><span>{item.text}</span></div>)}
+                    </div>
+                  </>
+                )}
+
+                {premiumTool === "cards" && (
+                  <>
+                    <div className="cardsHero">
+                      <div className={`flipCard ${cardFlipping ? "flipping" : ""}`}>
+                        <div className="flipCardInner">
+                          <div className="flipCardFront">
+                            <CreditCard size={42} />
+                            <span>{lang === "fr" ? "Carte mystère" : "Mystery Card"}</span>
+                          </div>
+                          <div className="flipCardBack">
+                            <strong>{drawnCard || "?"}</strong>
+                          </div>
+                        </div>
+                      </div>
+
+                      <button className="primaryAction" onClick={drawCard}>{t.drawCard}</button>
+                    </div>
+
+                    <div className="bankTransferCard">
+                      <label>{t.cardName}</label>
+                      <input
+                        type="text"
+                        value={newCard}
+                        placeholder={lang === "fr" ? "Ex: Passe ton tour" : "Ex: Skip your turn"}
+                        onChange={(e) => setNewCard(e.target.value)}
+                      />
+
+                      <button className="secondaryAction" onClick={addCard}><Plus size={18} />{t.addCard}</button>
+                    </div>
+
+                    <div className="deckList">
+                      <h3>{t.deck} ({cards.length})</h3>
+
+                      {cards.length === 0 && <div className="historyItem"><span>{t.noCards}</span></div>}
+
+                      {cards.map((card, index) => (
+                        <div className="deckItem" key={`${card}-${index}`}>
+                          <span>{card}</span>
+                          <button onClick={() => removeCard(index)}><Minus size={16} /></button>
+                        </div>
+                      ))}
+                    </div>
+
+                    <button className="secondaryAction" onClick={resetDeck}><RotateCcw size={18} />{t.resetDeck}</button>
+
+                    <div className="historyList">
+                      <h3>{t.drawnCards}</h3>
+                      {cardHistory.length === 0 && <div className="historyItem"><span>{t.noHistory}</span></div>}
+                      {cardHistory.map((item) => <div className="historyItem" key={item.id}><span>{item.text}</span></div>)}
+                    </div>
+                  </>
+                )}
               </>
             )}
           </section>
@@ -330,7 +537,12 @@ export default function App() {
       <nav className="bottomNav">
         {tabs.map((tab) => {
           const Icon = tab.icon;
-          return <button key={tab.id} className={activeTab === tab.id ? "active" : ""} onClick={() => setActiveTab(tab.id)}><Icon size={22} /><span>{tab.label}</span></button>;
+          return (
+            <button key={tab.id} className={activeTab === tab.id ? "active" : ""} onClick={() => setActiveTab(tab.id)}>
+              <Icon size={22} />
+              <span>{tab.label}</span>
+            </button>
+          );
         })}
       </nav>
     </div>
