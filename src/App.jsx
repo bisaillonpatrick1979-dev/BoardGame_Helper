@@ -4,22 +4,96 @@ import {
   Timer,
   Trophy,
   Wallet,
-  CreditCards,
+  CreditCard,
   Shuffle,
   Lock,
   Home,
   RotateCcw,
   Plus,
-  Minus
+  Minus,
+  Unlock
 } from "lucide-react";
 
-const tabs = [
-  { id: "home", label: "Home", icon: Home },
-  { id: "dice", label: "Dice", icon: Dice6 },
-  { id: "timer", label: "Timer", icon: Timer },
-  { id: "score", label: "Score", icon: Trophy },
-  { id: "premium", label: "Premium", icon: Lock }
-];
+const TEXT = {
+  en: {
+    home: "Home",
+    dice: "Dice",
+    timer: "Timer",
+    score: "Score",
+    premium: "Premium",
+    title: "Board Game Helper",
+    hero: "Replace missing dice, timers, score sheets, cards and money tools with one premium mobile companion.",
+    rescue: "Rescue Game Night",
+    rollDice: "Roll Dice",
+    startTimer: "Start Timer",
+    trackScore: "Track Score",
+    premiumBank: "Premium Bank",
+    diceTitle: "Realistic Dice Roller",
+    diceDesc: "Choose dice, roll multiple at once, and keep history.",
+    total: "Total",
+    numberDice: "Number of dice",
+    timerTitle: "Game Timer",
+    timerDesc: "Fast presets for turns, challenges and family games.",
+    pauseTimer: "Pause Timer",
+    reset: "Reset",
+    scoreTitle: "Scoreboard",
+    scoreDesc: "Track multiple players with quick plus and minus controls.",
+    currentScore: "Current score",
+    addPlayer: "Add Player",
+    resetScores: "Reset Scores",
+    premiumTitle: "Premium Tools",
+    premiumDescLocked: "Bank, cards, randomizer and premium themes are locked.",
+    premiumDescUnlocked: "Premium tools are unlocked on this device.",
+    unlockPremium: "Unlock Premium",
+    premiumUnlocked: "Premium Unlocked",
+    bankDesc: "Money balances, transfers and transaction history.",
+    cards: "Cards",
+    cardsDesc: "Custom decks, random draw and flip animations.",
+    randomizer: "Randomizer",
+    randomizerDesc: "Animated wheel and custom random selections.",
+    locked: "Locked",
+    unlocked: "Unlocked"
+  },
+  fr: {
+    home: "Accueil",
+    dice: "Dés",
+    timer: "Minuteur",
+    score: "Score",
+    premium: "Premium",
+    title: "Board Game Helper",
+    hero: "Remplace les dés perdus, minuteurs, feuilles de score, cartes et outils d’argent dans une seule application mobile.",
+    rescue: "Sauver la soirée de jeu",
+    rollDice: "Lancer les dés",
+    startTimer: "Démarrer le minuteur",
+    trackScore: "Suivre les scores",
+    premiumBank: "Banque Premium",
+    diceTitle: "Lanceur de dés réaliste",
+    diceDesc: "Choisis tes dés, lance plusieurs dés à la fois et garde l’historique.",
+    total: "Total",
+    numberDice: "Nombre de dés",
+    timerTitle: "Minuteur de jeu",
+    timerDesc: "Préréglages rapides pour les tours, défis et jeux de famille.",
+    pauseTimer: "Pause",
+    reset: "Réinitialiser",
+    scoreTitle: "Tableau des scores",
+    scoreDesc: "Suis plusieurs joueurs avec des boutons plus et moins.",
+    currentScore: "Score actuel",
+    addPlayer: "Ajouter un joueur",
+    resetScores: "Réinitialiser les scores",
+    premiumTitle: "Outils Premium",
+    premiumDescLocked: "Banque, cartes, randomizer et thèmes premium sont verrouillés.",
+    premiumDescUnlocked: "Les outils premium sont débloqués sur cet appareil.",
+    unlockPremium: "Débloquer Premium",
+    premiumUnlocked: "Premium débloqué",
+    bankDesc: "Balances d’argent, transferts et historique.",
+    cards: "Cartes",
+    cardsDesc: "Paquets personnalisés, tirage aléatoire et animation de retournement.",
+    randomizer: "Randomizer",
+    randomizerDesc: "Roue animée et sélections aléatoires personnalisées.",
+    locked: "Verrouillé",
+    unlocked: "Débloqué"
+  }
+};
 
 const diceTypes = [4, 6, 8, 10, 12, 20];
 
@@ -27,9 +101,39 @@ function randomRoll(sides) {
   return Math.floor(Math.random() * sides) + 1;
 }
 
-export default function App() {
-  const [activeTab, setActiveTab] = useState("home");
+function DiceFace({ value, sides, rolling }) {
+  if (sides !== 6) {
+    return (
+      <div className={`polyDie ${rolling ? "rolling" : ""}`}>
+        <span>D{sides}</span>
+        <strong>{value}</strong>
+      </div>
+    );
+  }
 
+  return (
+    <div className={`realDie face${value} ${rolling ? "rolling" : ""}`}>
+      {Array.from({ length: 9 }).map((_, index) => (
+        <i key={index}></i>
+      ))}
+    </div>
+  );
+}
+
+export default function App() {
+  const [lang, setLang] = useState(() => localStorage.getItem("bgh_lang") || "en");
+  const [isPremium, setIsPremium] = useState(() => localStorage.getItem("bgh_premium") === "true");
+  const t = TEXT[lang];
+
+  const tabs = [
+    { id: "home", label: t.home, icon: Home },
+    { id: "dice", label: t.dice, icon: Dice6 },
+    { id: "timer", label: t.timer, icon: Timer },
+    { id: "score", label: t.score, icon: Trophy },
+    { id: "premium", label: t.premium, icon: isPremium ? Unlock : Lock }
+  ];
+
+  const [activeTab, setActiveTab] = useState("home");
   const [selectedDie, setSelectedDie] = useState(6);
   const [diceCount, setDiceCount] = useState(1);
   const [rolling, setRolling] = useState(false);
@@ -45,9 +149,15 @@ export default function App() {
     { id: 2, name: "Player 2", score: 0 }
   ]);
 
-  const totalRoll = useMemo(() => {
-    return rolls.reduce((sum, value) => sum + value, 0);
-  }, [rolls]);
+  useEffect(() => {
+    localStorage.setItem("bgh_lang", lang);
+  }, [lang]);
+
+  useEffect(() => {
+    localStorage.setItem("bgh_premium", String(isPremium));
+  }, [isPremium]);
+
+  const totalRoll = useMemo(() => rolls.reduce((sum, value) => sum + value, 0), [rolls]);
 
   useEffect(() => {
     if (!timerRunning) return;
@@ -57,14 +167,9 @@ export default function App() {
         if (current <= 1) {
           clearInterval(timerRef.current);
           setTimerRunning(false);
-
-          if (navigator.vibrate) {
-            navigator.vibrate([200, 100, 200]);
-          }
-
+          if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
           return 0;
         }
-
         return current - 1;
       });
     }, 1000);
@@ -77,38 +182,39 @@ export default function App() {
 
   function handleRoll() {
     setRolling(true);
+    if (navigator.vibrate) navigator.vibrate(80);
 
-    if (navigator.vibrate) {
-      navigator.vibrate(80);
-    }
+    let animationTicks = 0;
+    const animation = setInterval(() => {
+      setRolls(Array.from({ length: diceCount }, () => randomRoll(selectedDie)));
+      animationTicks += 1;
 
-    setTimeout(() => {
-      const newRolls = Array.from({ length: diceCount }, () =>
-        randomRoll(selectedDie)
-      );
+      if (animationTicks >= 8) {
+        clearInterval(animation);
 
-      setRolls(newRolls);
-      setHistory((oldHistory) => [
-        {
-          id: Date.now(),
-          die: selectedDie,
-          count: diceCount,
-          rolls: newRolls,
-          total: newRolls.reduce((sum, value) => sum + value, 0)
-        },
-        ...oldHistory.slice(0, 9)
-      ]);
+        const newRolls = Array.from({ length: diceCount }, () => randomRoll(selectedDie));
 
-      setRolling(false);
-    }, 650);
+        setRolls(newRolls);
+        setHistory((oldHistory) => [
+          {
+            id: Date.now(),
+            die: selectedDie,
+            count: diceCount,
+            rolls: newRolls,
+            total: newRolls.reduce((sum, value) => sum + value, 0)
+          },
+          ...oldHistory.slice(0, 9)
+        ]);
+
+        setRolling(false);
+      }
+    }, 90);
   }
 
   function changePlayerScore(playerId, amount) {
     setPlayers((currentPlayers) =>
       currentPlayers.map((player) =>
-        player.id === playerId
-          ? { ...player, score: player.score + amount }
-          : player
+        player.id === playerId ? { ...player, score: player.score + amount } : player
       )
     );
   }
@@ -116,18 +222,12 @@ export default function App() {
   function addPlayer() {
     setPlayers((currentPlayers) => [
       ...currentPlayers,
-      {
-        id: Date.now(),
-        name: `Player ${currentPlayers.length + 1}`,
-        score: 0
-      }
+      { id: Date.now(), name: `Player ${currentPlayers.length + 1}`, score: 0 }
     ]);
   }
 
   function resetScores() {
-    setPlayers((currentPlayers) =>
-      currentPlayers.map((player) => ({ ...player, score: 0 }))
-    );
+    setPlayers((currentPlayers) => currentPlayers.map((player) => ({ ...player, score: 0 })));
   }
 
   return (
@@ -136,43 +236,47 @@ export default function App() {
       <div className="backgroundGlow backgroundGlowTwo"></div>
 
       <main className="screen">
+        <div className="topBar">
+          <button className={lang === "en" ? "langActive" : ""} onClick={() => setLang("en")}>
+            EN
+          </button>
+          <button className={lang === "fr" ? "langActive" : ""} onClick={() => setLang("fr")}>
+            FR
+          </button>
+        </div>
+
         {activeTab === "home" && (
           <section className="hero">
-            <div className="premiumBadge">Offline PWA • Premium Game Tools</div>
+            <div className="premiumBadge">
+              Offline PWA • {isPremium ? t.premiumUnlocked : "Premium Game Tools"}
+            </div>
 
-            <h1>Board Game Helper</h1>
-
-            <p>
-              Replace missing dice, timers, score sheets, cards and money tools
-              with one premium mobile companion.
-            </p>
+            <h1>{t.title}</h1>
+            <p>{t.hero}</p>
 
             <button className="heroButton" onClick={() => setActiveTab("dice")}>
-              Rescue Game Night
+              {t.rescue}
             </button>
 
             <div className="homeGrid">
               <button className="homeTile" onClick={() => setActiveTab("dice")}>
                 <Dice6 size={38} />
-                <span>Roll Dice</span>
+                <span>{t.rollDice}</span>
               </button>
 
               <button className="homeTile" onClick={() => setActiveTab("timer")}>
                 <Timer size={38} />
-                <span>Start Timer</span>
+                <span>{t.startTimer}</span>
               </button>
 
               <button className="homeTile" onClick={() => setActiveTab("score")}>
                 <Trophy size={38} />
-                <span>Track Score</span>
+                <span>{t.trackScore}</span>
               </button>
 
-              <button
-                className="homeTile lockedTile"
-                onClick={() => setActiveTab("premium")}
-              >
+              <button className={`homeTile ${!isPremium ? "lockedTile" : ""}`} onClick={() => setActiveTab("premium")}>
                 <Wallet size={38} />
-                <span>Premium Bank</span>
+                <span>{t.premiumBank}</span>
               </button>
             </div>
           </section>
@@ -181,32 +285,32 @@ export default function App() {
         {activeTab === "dice" && (
           <section className="toolPage">
             <div className="pageHeader">
-              <h2>3D Dice Roller</h2>
-              <p>Choose dice, roll multiple at once, and keep history.</p>
+              <h2>{t.diceTitle}</h2>
+              <p>{t.diceDesc}</p>
             </div>
 
-            <div className={`megaDice ${rolling ? "rolling" : ""}`}>🎲</div>
+            <div className="diceTable">
+              {rolls.map((value, index) => (
+                <DiceFace key={`${index}-${value}-${rolling}`} value={value} sides={selectedDie} rolling={rolling} />
+              ))}
+            </div>
 
             <div className="resultPanel">
-              <span>Total</span>
+              <span>{t.total}</span>
               <strong>{totalRoll}</strong>
               <small>{rolls.join(" + ")}</small>
             </div>
 
             <div className="diceSelector">
               {diceTypes.map((die) => (
-                <button
-                  key={die}
-                  className={selectedDie === die ? "selected" : ""}
-                  onClick={() => setSelectedDie(die)}
-                >
+                <button key={die} className={selectedDie === die ? "selected" : ""} onClick={() => setSelectedDie(die)}>
                   D{die}
                 </button>
               ))}
             </div>
 
             <div className="controlCard">
-              <span>Number of dice</span>
+              <span>{t.numberDice}</span>
 
               <div className="stepper">
                 <button onClick={() => setDiceCount(Math.max(1, diceCount - 1))}>
@@ -222,14 +326,14 @@ export default function App() {
             </div>
 
             <button className="primaryAction" onClick={handleRoll}>
-              Roll Dice
+              {t.rollDice}
             </button>
 
             <div className="historyList">
               {history.map((item) => (
                 <div className="historyItem" key={item.id}>
                   <span>
-                    {item.count} × D{item.die}
+                    {item.count} × D{item.die} — {item.rolls.join(" + ")}
                   </span>
                   <strong>{item.total}</strong>
                 </div>
@@ -241,8 +345,8 @@ export default function App() {
         {activeTab === "timer" && (
           <section className="toolPage">
             <div className="pageHeader">
-              <h2>Game Timer</h2>
-              <p>Fast presets for turns, challenges and family games.</p>
+              <h2>{t.timerTitle}</h2>
+              <p>{t.timerDesc}</p>
             </div>
 
             <div className="timerOrb">
@@ -265,11 +369,8 @@ export default function App() {
               ))}
             </div>
 
-            <button
-              className="primaryAction"
-              onClick={() => setTimerRunning((value) => !value)}
-            >
-              {timerRunning ? "Pause Timer" : "Start Timer"}
+            <button className="primaryAction" onClick={() => setTimerRunning((value) => !value)}>
+              {timerRunning ? t.pauseTimer : t.startTimer}
             </button>
 
             <button
@@ -280,7 +381,7 @@ export default function App() {
               }}
             >
               <RotateCcw size={18} />
-              Reset
+              {t.reset}
             </button>
           </section>
         )}
@@ -288,8 +389,8 @@ export default function App() {
         {activeTab === "score" && (
           <section className="toolPage">
             <div className="pageHeader">
-              <h2>Scoreboard</h2>
-              <p>Track multiple players with quick plus and minus controls.</p>
+              <h2>{t.scoreTitle}</h2>
+              <p>{t.scoreDesc}</p>
             </div>
 
             <div className="playerList">
@@ -297,7 +398,7 @@ export default function App() {
                 <div className="playerCard" key={player.id}>
                   <div>
                     <strong>{player.name}</strong>
-                    <span>Current score</span>
+                    <span>{t.currentScore}</span>
                   </div>
 
                   <div className="scoreControls">
@@ -316,12 +417,12 @@ export default function App() {
             </div>
 
             <button className="primaryAction" onClick={addPlayer}>
-              Add Player
+              {t.addPlayer}
             </button>
 
             <button className="secondaryAction" onClick={resetScores}>
               <RotateCcw size={18} />
-              Reset Scores
+              {t.resetScores}
             </button>
           </section>
         )}
@@ -329,34 +430,36 @@ export default function App() {
         {activeTab === "premium" && (
           <section className="toolPage">
             <div className="pageHeader">
-              <h2>Premium Tools</h2>
-              <p>Bank, cards, randomizer and premium themes are locked.</p>
+              <h2>{t.premiumTitle}</h2>
+              <p>{isPremium ? t.premiumDescUnlocked : t.premiumDescLocked}</p>
             </div>
 
             <div className="premiumGrid">
-              <div className="premiumCard">
+              <div className={`premiumCard ${isPremium ? "unlockedCard" : ""}`}>
                 <Wallet size={42} />
-                <h3>Game Bank</h3>
-                <p>Money balances, transfers and transaction history.</p>
-                <span>Premium Games Pack</span>
+                <h3>{t.premiumBank}</h3>
+                <p>{t.bankDesc}</p>
+                <span>{isPremium ? t.unlocked : t.locked}</span>
               </div>
 
-              <div className="premiumCard">
-                <Cards size={42} />
-                <h3>Cards</h3>
-                <p>Custom decks, random draw and flip animations.</p>
-                <span>Premium Games Pack</span>
+              <div className={`premiumCard ${isPremium ? "unlockedCard" : ""}`}>
+                <CreditCard size={42} />
+                <h3>{t.cards}</h3>
+                <p>{t.cardsDesc}</p>
+                <span>{isPremium ? t.unlocked : t.locked}</span>
               </div>
 
-              <div className="premiumCard">
+              <div className={`premiumCard ${isPremium ? "unlockedCard" : ""}`}>
                 <Shuffle size={42} />
-                <h3>Randomizer</h3>
-                <p>Animated wheel and custom random selections.</p>
-                <span>Premium Games Pack</span>
+                <h3>{t.randomizer}</h3>
+                <p>{t.randomizerDesc}</p>
+                <span>{isPremium ? t.unlocked : t.locked}</span>
               </div>
             </div>
 
-            <button className="primaryAction">Unlock Premium</button>
+            <button className="primaryAction" onClick={() => setIsPremium(true)}>
+              {isPremium ? t.premiumUnlocked : t.unlockPremium}
+            </button>
           </section>
         )}
       </main>
@@ -366,11 +469,7 @@ export default function App() {
           const Icon = tab.icon;
 
           return (
-            <button
-              key={tab.id}
-              className={activeTab === tab.id ? "active" : ""}
-              onClick={() => setActiveTab(tab.id)}
-            >
+            <button key={tab.id} className={activeTab === tab.id ? "active" : ""} onClick={() => setActiveTab(tab.id)}>
               <Icon size={22} />
               <span>{tab.label}</span>
             </button>
