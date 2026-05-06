@@ -506,6 +506,14 @@ export default function App() {
     }
   }, [cardPlayers.length, currentPlayerIndex]);
 
+  function updatePlayerName(playerId, name) {
+    setPlayers((current) =>
+      current.map((player) =>
+        player.id === playerId ? { ...player, name } : player
+      )
+    );
+  }
+
   function handleRoll() {
     setRolling(true);
     if (navigator.vibrate) navigator.vibrate(80);
@@ -792,6 +800,19 @@ export default function App() {
 
   const mistakes = letters.filter((letter) => !secretWord.includes(letter)).length;
 
+  function PlayerNameInput({ player }) {
+    return (
+      <div className="playerNameBlock">
+        <input
+          className="playerNameInput"
+          value={player.name}
+          onChange={(event) => updatePlayerName(player.id, event.target.value)}
+        />
+        <span>{t.currentScore}</span>
+      </div>
+    );
+  }
+
   function TableDiceWidget() {
     return (
       <div className="tableWidget">
@@ -866,7 +887,11 @@ export default function App() {
         <div className="compactPlayers">
           {players.map((player) => (
             <div key={player.id}>
-              <span>{player.name}</span>
+              <input
+                className="compactPlayerNameInput"
+                value={player.name}
+                onChange={(event) => updatePlayerName(player.id, event.target.value)}
+              />
               <div className="miniScoreButtons">
                 <button onClick={() => changePlayerScore(player.id, -1)}><Minus size={14} /></button>
                 <strong>{player.score}</strong>
@@ -1171,7 +1196,8 @@ export default function App() {
             <div className="playerList">
               {players.map((player) => (
                 <div className="playerCard" key={player.id}>
-                  <div><strong>{player.name}</strong><span>{t.currentScore}</span></div>
+                  <PlayerNameInput player={player} />
+
                   <div className="scoreControls">
                     <button onClick={() => changePlayerScore(player.id, -1)}><Minus size={18} /></button>
                     <b>{player.score}</b>
