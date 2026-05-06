@@ -4,7 +4,7 @@ import {
   Timer,
   Trophy,
   Wallet,
-  Cards,
+  CreditCards,
   Shuffle,
   Lock,
   Home,
