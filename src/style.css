@@ -560,3 +560,95 @@ body {
   border-color: rgba(250, 204, 21, 0.7);
   box-shadow: 0 0 28px rgba(250, 204, 21, 0.22);
 }
+
+.bankHeader {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 24px;
+  background: rgba(255,255,255,0.09);
+  border: 1px solid rgba(255,255,255,0.15);
+  margin-bottom: 18px;
+}
+
+.bankHeader h3 {
+  margin: 0;
+  color: white;
+}
+
+.bankHeader p {
+  margin: 4px 0 0;
+  opacity: 0.75;
+}
+
+.bankPlayers {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.bankPlayerCard {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-radius: 22px;
+  background: linear-gradient(135deg, rgba(250,204,21,0.18), rgba(255,255,255,0.08));
+  border: 1px solid rgba(250,204,21,0.35);
+}
+
+.bankPlayerCard strong {
+  display: block;
+  color: white;
+}
+
+.bankPlayerCard span {
+  display: block;
+  margin-top: 4px;
+  color: #facc15;
+  font-size: 24px;
+  font-weight: 900;
+}
+
+.bankButtons {
+  display: flex;
+  gap: 8px;
+}
+
+.bankButtons button {
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  border: 0;
+  font-weight: 900;
+  background: rgba(255,255,255,0.15);
+  color: white;
+}
+
+.bankTransferCard {
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+  border-radius: 24px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.14);
+  margin-bottom: 14px;
+}
+
+.bankTransferCard label {
+  color: white;
+  font-weight: 800;
+}
+
+.bankTransferCard input,
+.bankTransferCard select {
+  width: 100%;
+  padding: 13px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(15,23,42,0.9);
+  color: white;
+  font-size: 16px;
+}
+
