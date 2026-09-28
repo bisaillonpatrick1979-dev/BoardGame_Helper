@@ -4,7 +4,7 @@ import { DiceEngine } from "./DiceEngine.js";
 import { DICE_PALETTES } from "./diceGeometry.js";
 
 const Dice3D = forwardRef(function Dice3D(
-  { sides = 6, count = 1, paletteId = "ivory", felt = "#16325c", sound = true, compact = false, onRollStart, onResult, hint },
+  { sides = 6, count = 1, paletteId = "ivory", felt = "#16325c", sound = true, compact = false, className = "", onRollStart, onResult, hint, canRoll, canHold },
   ref
 ) {
   const hostRef = useRef(null);
@@ -14,8 +14,8 @@ const Dice3D = forwardRef(function Dice3D(
   const [webglError, setWebglError] = useState(false);
 
   // Garde les callbacks à jour sans recréer le moteur
-  const callbacks = useRef({ onRollStart, onResult });
-  callbacks.current = { onRollStart, onResult };
+  const callbacks = useRef({ onRollStart, onResult, canRoll, canHold });
+  callbacks.current = { onRollStart, onResult, canRoll, canHold };
 
   useEffect(() => {
     let engine;
@@ -31,7 +31,10 @@ const Dice3D = forwardRef(function Dice3D(
           if (!result.silent) setRolling(false);
           callbacks.current.onResult?.(result);
         },
-        onLabels: setLabels
+        onLabels: setLabels,
+        // Permet à un jeu (ex. Yam's) de bloquer les lancers ou les dés gardés
+        canRoll: () => (callbacks.current.canRoll ? callbacks.current.canRoll() : true),
+        canHold: () => (callbacks.current.canHold ? callbacks.current.canHold() : true)
       });
     } catch (error) {
       console.error(error);
@@ -46,10 +49,15 @@ const Dice3D = forwardRef(function Dice3D(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
+  const resetDice = () => {
     const palette = DICE_PALETTES.find((p) => p.id === paletteId) || DICE_PALETTES[0];
     engineRef.current?.setDice(sides, count, palette);
     setRolling(false);
+  };
+
+  useEffect(() => {
+    resetDice();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sides, count, paletteId]);
 
   useEffect(() => {
@@ -62,7 +70,8 @@ const Dice3D = forwardRef(function Dice3D(
 
   useImperativeHandle(ref, () => ({
     roll: () => engineRef.current?.roll(),
-    releaseAll: () => engineRef.current?.releaseAll()
+    releaseAll: () => engineRef.current?.releaseAll(),
+    reset: resetDice
   }));
 
   if (webglError) {
@@ -70,7 +79,7 @@ const Dice3D = forwardRef(function Dice3D(
   }
 
   return (
-    <div className={`diceTray ${compact ? "diceTrayCompact" : ""}`}>
+    <div className={`diceTray ${compact ? "diceTrayCompact" : ""} ${className}`}>
       <div ref={hostRef} className="diceTrayCanvas" />
       {!rolling &&
         labels.map((label, index) => (

@@ -4,16 +4,21 @@ Il te manque des dés, le sablier ou l'argent du jeu? Board Game Helper remplace
 
 ## Fonctionnalités
 
-- **Dés 3D réalistes** : D4, D6, D8, D10, D12 et D20 en vrais polyèdres, avec physique (rebonds, collisions), ombres et son d'impact.
-  - Touche le tapis ou le bouton pour lancer, ou **glisse le doigt** pour lancer dans une direction.
-  - **Touche un dé pour le garder** : seuls les autres sont relancés (pratique pour les jeux à 5 dés).
-  - 1 à 12 dés, 7 couleurs (ivoire, rubis, saphir, émeraude, onyx, améthyste, or).
-  - Le total et l'historique des 10 derniers lancers.
-- **Table de jeu** : dés, minuteur, scores, cartes, banque et roue sur un seul écran.
-- **Scores** : plusieurs joueurs, noms modifiables.
-- **Premium** : banque avec transferts, jeu de 52 cartes (mains privées, bataille, cartes custom), roue de hasard, kits de jeux, thèmes et mini-jeu du pendu.
-- **Bilingue** : français et anglais.
-- **PWA hors ligne** : installable sur l'écran d'accueil, fonctionne sans connexion après la première visite.
+L'app est organisée comme une vraie application mobile : en-tête, 5 onglets (Accueil, Dés, Cartes, Jeux, Outils) et chaque écran tient dans la hauteur du téléphone.
+
+- **Dés 3D réalistes** : D4 à D20 en vrais polyèdres avec physique, ombres et son. Touche ou glisse pour lancer, touche un dé pour le garder. 7 couleurs.
+- **Cartes réalistes** : jeu de 52 cartes dessiné en vectoriel (vraie disposition des enseignes, figures illustrées, dos décoré), retournement 3D.
+  - Piger (pioche sans remise, 1 à 8 jeux, jokers), Mains privées (passe le téléphone), Bataille, Cartes perso.
+- **Jeux** :
+  - Pendu : le bonhomme se dessine trait par trait, 7 catégories, mode 2 joueurs avec mot secret.
+  - Yam's : 5 dés 3D, 3 lancers, feuille de score de 13 cases, 1 à 4 joueurs.
+  - Blackjack contre le croupier, avec jetons.
+  - Puissance 4 et Tic-tac-toe : à deux ou contre l'ordinateur.
+  - Memory avec les cartes, seul ou à deux.
+  - Plus haut, plus bas.
+- **Outils** : scores (pas de 1/5/10/50), minuteur circulaire, banque avec transferts, roue de hasard.
+- **Réglages** : français/anglais, 8 thèmes, son.
+- **PWA hors ligne** : installable sur l'écran d'accueil, fonctionne sans connexion.
 
 ## Développement
 
@@ -26,6 +31,14 @@ npm run build    # version de production dans dist/
 ## Technologies
 
 React 18, Vite, three.js (rendu 3D), cannon-es (physique), lucide-react (icônes).
+
+Organisation du code :
+
+- `src/App.jsx` : coquille (en-tête, onglets, réglages).
+- `src/screens/` : écrans Accueil, Dés, Cartes, Jeux, Outils, Réglages.
+- `src/games/` : un fichier par jeu.
+- `src/cards/` : cartes à jouer SVG et paquet.
+- `src/lib/core.js` : langue, stockage, sons, hasard.
 
 Le code des dés est dans `src/dice/` :
 

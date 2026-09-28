@@ -1,7 +1,7 @@
 // Service worker : l'app fonctionne hors ligne après la première visite.
 // Pages : réseau d'abord (pour recevoir les mises à jour), cache en secours.
 // Fichiers statiques (JS, CSS, images) : cache d'abord.
-const CACHE = "bgh-v2";
+const CACHE = "bgh-v3";
 const CORE = ["/", "/index.html", "/manifest.webmanifest", "/icon-192.png", "/icon-512.png", "/favicon.png"];
 
 self.addEventListener("install", (event) => {

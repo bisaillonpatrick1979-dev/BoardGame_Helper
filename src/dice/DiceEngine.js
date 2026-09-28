@@ -386,7 +386,8 @@ export class DiceEngine {
 
   // ---------- Lancer ----------
   roll({ direction, power = 1 } = {}) {
-    if (this.dice.length === 0) return false;
+    if (this.dice.length === 0 || this.rolling) return false;
+    if (this.options.canRoll && !this.options.canRoll()) return false;
     const active = this.dice.filter((d) => !d.held);
     if (active.length === 0) return false;
 
@@ -450,6 +451,7 @@ export class DiceEngine {
   // ---------- Garder un dé (pour relancer seulement les autres) ----------
   toggleHold(die) {
     if (this.rolling) return;
+    if (!die.held && this.options.canHold && !this.options.canHold()) return;
     die.held = !die.held;
     const { body } = die;
     if (die.held) {
