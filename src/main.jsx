@@ -11,13 +11,11 @@ ReactDOM.createRoot(document.getElementById("root")).render(
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker
-      .register("/sw.js")
-      .then(() => {
-        console.log("Service Worker registered");
-      })
-      .catch((error) => {
-        console.log("Service Worker error:", error);
+    // Active le mode hors ligne (seulement en production)
+    if (import.meta.env.PROD) {
+      navigator.serviceWorker.register("/sw.js").catch((error) => {
+        console.warn("Service worker non enregistré :", error);
       });
+    }
   });
 }

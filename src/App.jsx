@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import Dice3D from "./dice/Dice3D.jsx";
+import { DICE_PALETTES } from "./dice/diceGeometry.js";
 import {
   Dice6,
   Timer,
@@ -26,7 +28,10 @@ import {
   Eye,
   EyeOff,
   UserRound,
-  Shield
+  Shield,
+  Volume2,
+  VolumeX,
+  Hand
 } from "lucide-react";
 
 const TEXT = {
@@ -107,7 +112,13 @@ const TEXT = {
     cardKit: "Classic Card Kit",
     chooseTheme: "Choose Theme",
     hangman: "Hangman",
-    newWord: "New Word"
+    newWord: "New Word",
+    diceHint: "Tap the table or swipe to throw • Tap a die to keep it",
+    diceColor: "Dice color",
+    sound: "Sound",
+    releaseAll: "Release kept dice",
+    kept: "kept",
+    rollingDice: "Rolling…"
   },
   fr: {
     home: "Accueil",
@@ -186,7 +197,13 @@ const TEXT = {
     cardKit: "Kit Cartes Classiques",
     chooseTheme: "Choisir un thème",
     hangman: "Pendu",
-    newWord: "Nouveau mot"
+    newWord: "Nouveau mot",
+    diceHint: "Touche le tapis ou glisse pour lancer • Touche un dé pour le garder",
+    diceColor: "Couleur des dés",
+    sound: "Son",
+    releaseAll: "Relâcher les dés gardés",
+    kept: "gardé(s)",
+    rollingDice: "Ça roule…"
   }
 };
 
@@ -224,6 +241,20 @@ const themes = [
   { id: "cartoon", name: "Family Cartoon", premium: true },
   { id: "rgb", name: "RGB Party", premium: true }
 ];
+
+// Couleur du tapis de dés selon le thème choisi
+const feltByTheme = {
+  classic: "#163a6b",
+  cabin: "#4a2c17",
+  casino: "#0e5a32",
+  future: "#0b2a3d",
+  fantasy: "#34165c",
+  arcade: "#3d1152",
+  pirate: "#4a3419",
+  halloween: "#3a1a08",
+  cartoon: "#1e40af",
+  rgb: "#141440"
+};
 
 const cardPresets = [
   { id: "war", label: "Battle", decks: 1, jokers: false, cardsEach: 1 },
@@ -276,8 +307,14 @@ function randomRoll(sides) {
   return Math.floor(Math.random() * sides) + 1;
 }
 
+// Mélange équitable (Fisher-Yates)
 function shuffleArray(array) {
-  return [...array].sort(() => Math.random() - 0.5);
+  const copy = [...array];
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
 }
 
 function buildStandardDeck(deckCount = 1, includeJokers = true) {
@@ -313,25 +350,6 @@ function cardValue(card) {
   if (card.rank === "Q") return 12;
   if (card.rank === "J") return 11;
   return Number(card.rank);
-}
-
-function DiceFace({ value, sides, rolling }) {
-  if (sides !== 6) {
-    return (
-      <div className={`polyDie ${rolling ? "rolling" : ""}`}>
-        <span>D{sides}</span>
-        <strong>{value}</strong>
-      </div>
-    );
-  }
-
-  return (
-    <div className={`realDie face${value} ${rolling ? "rolling" : ""}`}>
-      {Array.from({ length: 9 }).map((_, index) => (
-        <i key={index}></i>
-      ))}
-    </div>
-  );
 }
 
 function PlayingCard({ card, flipping, small = false }) {
@@ -384,7 +402,12 @@ export default function App() {
   const [diceCount, setDiceCount] = useState(1);
   const [rolling, setRolling] = useState(false);
   const [rolls, setRolls] = useState([6]);
+  const [heldDice, setHeldDice] = useState([]);
   const [history, setHistory] = useState([]);
+  const [diceColor, setDiceColor] = useState(() => localStorage.getItem("bgh_dice_color") || "ivory");
+  const [diceSound, setDiceSound] = useState(() => localStorage.getItem("bgh_dice_sound") !== "false");
+  const diceRef = useRef(null);
+  const tableDiceRef = useRef(null);
 
   const [seconds, setSeconds] = useState(300);
   const [timerRunning, setTimerRunning] = useState(false);
@@ -467,6 +490,8 @@ export default function App() {
   useEffect(() => localStorage.setItem("bgh_lang", lang), [lang]);
   useEffect(() => localStorage.setItem("bgh_premium", String(isPremium)), [isPremium]);
   useEffect(() => localStorage.setItem("bgh_theme", theme), [theme]);
+  useEffect(() => localStorage.setItem("bgh_dice_color", diceColor), [diceColor]);
+  useEffect(() => localStorage.setItem("bgh_dice_sound", String(diceSound)), [diceSound]);
   useEffect(() => localStorage.setItem("bgh_players", JSON.stringify(players)), [players]);
   useEffect(() => localStorage.setItem("bgh_bank_history", JSON.stringify(bankHistory)), [bankHistory]);
   useEffect(() => localStorage.setItem("bgh_cards", JSON.stringify(customCards)), [customCards]);
@@ -514,32 +539,28 @@ export default function App() {
     );
   }
 
+  // Lance les dés 3D (onglet Dés ou widget de la table)
   function handleRoll() {
-    setRolling(true);
-    if (navigator.vibrate) navigator.vibrate(80);
+    const engine = activeTab === "table" ? tableDiceRef.current : diceRef.current;
+    engine?.roll();
+  }
 
-    let ticks = 0;
-    const animation = setInterval(() => {
-      setRolls(Array.from({ length: diceCount }, () => randomRoll(selectedDie)));
-      ticks += 1;
-
-      if (ticks >= 8) {
-        clearInterval(animation);
-        const newRolls = Array.from({ length: diceCount }, () => randomRoll(selectedDie));
-        setRolls(newRolls);
-        setHistory((old) => [
-          {
-            id: Date.now(),
-            die: selectedDie,
-            count: diceCount,
-            rolls: newRolls,
-            total: newRolls.reduce((s, v) => s + v, 0)
-          },
-          ...old.slice(0, 9)
-        ]);
-        setRolling(false);
-      }
-    }, 90);
+  // Résultat renvoyé par le moteur 3D quand les dés sont immobiles
+  function handleDiceResult({ values, held, silent }) {
+    setRolls(values);
+    setHeldDice(held);
+    if (silent) return;
+    setRolling(false);
+    setHistory((old) => [
+      {
+        id: Date.now(),
+        die: selectedDie,
+        count: values.length,
+        rolls: values,
+        total: values.reduce((s, v) => s + v, 0)
+      },
+      ...old.slice(0, 9)
+    ]);
   }
 
   function changePlayerScore(playerId, amount) {
@@ -838,12 +859,21 @@ export default function App() {
           </div>
         </div>
 
+        <Dice3D
+          ref={tableDiceRef}
+          compact
+          sides={selectedDie}
+          count={diceCount}
+          paletteId={diceColor}
+          felt={feltByTheme[theme] || feltByTheme.classic}
+          sound={diceSound}
+          onRollStart={() => setRolling(true)}
+          onResult={handleDiceResult}
+        />
+
         <div className="compactDiceLine">
-          <DiceFace value={rolls[0] || 1} sides={selectedDie} rolling={rolling} />
-          <div>
-            <span>{t.total}</span>
-            <strong>{totalRoll}</strong>
-          </div>
+          <span>{t.total}</span>
+          <strong>{rolling ? "…" : totalRoll}</strong>
         </div>
 
         <button className="miniAction" onClick={handleRoll}>{t.rollDice}</button>
@@ -926,9 +956,9 @@ export default function App() {
           </>
         )}
 
-        {cardMode === "private" && <PrivateHandsPanel compact />}
+        {cardMode === "private" && PrivateHandsPanel({ compact: true })}
 
-        {cardMode === "war" && <WarPanel compact />}
+        {cardMode === "war" && WarPanel({ compact: true })}
 
         {cardMode === "custom" && (
           <>
@@ -1146,17 +1176,36 @@ export default function App() {
               <p>{lang === "fr" ? "Choisis tes dés, lance plusieurs dés à la fois et garde l’historique." : "Choose dice, roll multiple at once, and keep history."}</p>
             </div>
 
-            <div className="diceTable">
-              {rolls.map((value, index) => (
-                <DiceFace key={`${index}-${value}-${rolling}`} value={value} sides={selectedDie} rolling={rolling} />
-              ))}
-            </div>
+            <Dice3D
+              ref={diceRef}
+              sides={selectedDie}
+              count={diceCount}
+              paletteId={diceColor}
+              felt={feltByTheme[theme] || feltByTheme.classic}
+              sound={diceSound}
+              hint={t.diceHint}
+              onRollStart={() => setRolling(true)}
+              onResult={handleDiceResult}
+            />
 
             <div className="resultPanel">
               <span>{t.total}</span>
-              <strong>{totalRoll}</strong>
-              <small>{rolls.join(" + ")}</small>
+              <strong className={rolling ? "totalRolling" : "totalPop"} key={rolling ? "rolling" : `${totalRoll}-${history[0]?.id || 0}`}>
+                {rolling ? t.rollingDice : totalRoll}
+              </strong>
+              <small>{rolling ? "\u00a0" : rolls.join(" + ")}</small>
+              {heldDice.some(Boolean) && (
+                <button className="releaseButton" onClick={() => diceRef.current?.releaseAll()}>
+                  <Hand size={16} />
+                  {heldDice.filter(Boolean).length} {t.kept} — {t.releaseAll}
+                </button>
+              )}
             </div>
+
+            <button className="primaryAction rollButton" onClick={handleRoll} disabled={rolling}>
+              <Dice6 size={22} />
+              {t.rollDice}
+            </button>
 
             <div className="diceSelector">
               {diceTypes.map((die) => (
@@ -1173,7 +1222,24 @@ export default function App() {
               </div>
             </div>
 
-            <button className="primaryAction" onClick={handleRoll}>{t.rollDice}</button>
+            <div className="controlCard diceOptions">
+              <span>{t.diceColor}</span>
+              <div className="colorSwatches">
+                {DICE_PALETTES.map((palette) => (
+                  <button
+                    key={palette.id}
+                    title={palette[lang]}
+                    aria-label={palette[lang]}
+                    className={diceColor === palette.id ? "active" : ""}
+                    style={{ background: `radial-gradient(circle at 35% 30%, ${palette.ink}55, ${palette.body} 45%)` }}
+                    onClick={() => setDiceColor(palette.id)}
+                  />
+                ))}
+              </div>
+              <button className="soundToggle" onClick={() => setDiceSound((v) => !v)} aria-label={t.sound}>
+                {diceSound ? <Volume2 size={18} /> : <VolumeX size={18} />}
+              </button>
+            </div>
 
             <div className="historyList">
               {history.map((item) => (
@@ -1196,7 +1262,7 @@ export default function App() {
             <div className="playerList">
               {players.map((player) => (
                 <div className="playerCard" key={player.id}>
-                  <PlayerNameInput player={player} />
+                  {PlayerNameInput({ player })}
 
                   <div className="scoreControls">
                     <button onClick={() => changePlayerScore(player.id, -1)}><Minus size={18} /></button>
@@ -1239,12 +1305,12 @@ export default function App() {
             </div>
 
             <div className="gameTableGrid">
-              {tableTools.dice && <TableDiceWidget />}
-              {tableTools.timer && <TableTimerWidget />}
-              {tableTools.score && <TableScoreWidget />}
-              {tableTools.cards && <TableCardsWidget />}
-              {tableTools.bank && <TableBankWidget />}
-              {tableTools.randomizer && <TableRandomizerWidget />}
+              {tableTools.dice && TableDiceWidget()}
+              {tableTools.timer && TableTimerWidget()}
+              {tableTools.score && TableScoreWidget()}
+              {tableTools.cards && TableCardsWidget()}
+              {tableTools.bank && TableBankWidget()}
+              {tableTools.randomizer && TableRandomizerWidget()}
             </div>
           </section>
         )}
@@ -1287,7 +1353,7 @@ export default function App() {
                       <div><h3>{t.bankTitle}</h3><p>{t.bankDesc}</p></div>
                     </div>
 
-                    <TableBankWidget />
+                    {TableBankWidget()}
 
                     <button className="secondaryAction" onClick={resetBank}><RotateCcw size={18} />{t.resetBank}</button>
 
@@ -1339,9 +1405,9 @@ export default function App() {
                       </>
                     )}
 
-                    {cardMode === "private" && <PrivateHandsPanel />}
+                    {cardMode === "private" && PrivateHandsPanel({})}
 
-                    {cardMode === "war" && <WarPanel />}
+                    {cardMode === "war" && WarPanel({})}
 
                     {cardMode === "custom" && (
                       <>

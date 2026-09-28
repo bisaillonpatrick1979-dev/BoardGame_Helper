@@ -1,13 +1,50 @@
-self.addEventListener("install", (event) => {
-  console.log("Service Worker installed");
+// Service worker : l'app fonctionne hors ligne après la première visite.
+// Pages : réseau d'abord (pour recevoir les mises à jour), cache en secours.
+// Fichiers statiques (JS, CSS, images) : cache d'abord.
+const CACHE = "bgh-v2";
+const CORE = ["/", "/index.html", "/manifest.webmanifest", "/icon-192.png", "/icon-512.png", "/favicon.png"];
 
-  self.skipWaiting();
+self.addEventListener("install", (event) => {
+  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(CORE)).then(() => self.skipWaiting()));
 });
 
 self.addEventListener("activate", (event) => {
-  console.log("Service Worker activated");
+  event.waitUntil(
+    caches
+      .keys()
+      .then((keys) => Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key))))
+      .then(() => self.clients.claim())
+  );
 });
 
 self.addEventListener("fetch", (event) => {
-  event.respondWith(fetch(event.request));
+  const { request } = event;
+  if (request.method !== "GET" || new URL(request.url).origin !== self.location.origin) return;
+
+  if (request.mode === "navigate") {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          const copy = response.clone();
+          caches.open(CACHE).then((cache) => cache.put("/index.html", copy));
+          return response;
+        })
+        .catch(() => caches.match("/index.html"))
+    );
+    return;
+  }
+
+  event.respondWith(
+    caches.match(request).then(
+      (cached) =>
+        cached ||
+        fetch(request).then((response) => {
+          if (response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE).then((cache) => cache.put(request, copy));
+          }
+          return response;
+        })
+    )
+  );
 });
