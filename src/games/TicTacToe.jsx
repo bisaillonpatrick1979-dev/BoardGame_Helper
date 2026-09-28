@@ -1,7 +1,7 @@
 // Tic-tac-toe (morpion) : à deux ou contre l'ordinateur
 import { useEffect, useState } from "react";
 import { Cpu, RotateCcw, Users } from "lucide-react";
-import { randomInt, sfx, useLang, vibrate } from "../lib/core.js";
+import { randomInt, sfx, useLang, vibrate, recordGame } from "../lib/core.js";
 
 const LINES = [
   [0, 1, 2], [3, 4, 5], [6, 7, 8],
@@ -71,6 +71,7 @@ export default function TicTacToe() {
     const r = winnerOf(next);
     if (r) {
       setScore((s) => ({ ...s, [r.player]: s[r.player] + 1 }));
+      recordGame("tictactoe", r.player === "draw" ? "draw" : !vsCpu ? "played" : r.player === "X" ? "win" : "loss");
       if (r.player === "draw") sfx.bad();
       else if (vsCpu && r.player === "O") sfx.lose();
       else sfx.win();

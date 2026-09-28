@@ -2,7 +2,7 @@
 import { useRef, useState } from "react";
 import { Dice5, Minus, Plus, RotateCcw } from "lucide-react";
 import Dice3D from "../dice/Dice3D.jsx";
-import { sfx, useLang, vibrate } from "../lib/core.js";
+import { sfx, useLang, vibrate, recordGame } from "../lib/core.js";
 import { feltFor } from "../screens/SettingsSheet.jsx";
 import { Confetti } from "./Hangman.jsx";
 
@@ -88,6 +88,8 @@ export default function Yams({ players, theme, sound }) {
     const done = next.every((s) => CATEGORIES.every((c) => s[c.id] !== undefined));
     if (done) {
       setTimeout(sfx.win, 400);
+      const finalTotals = next.map((s) => totals(s).total);
+      recordGame("yams", nbPlayers === 1 ? "win" : "played", Math.max(...finalTotals));
       return;
     }
     setCurrent((current + 1) % nbPlayers);

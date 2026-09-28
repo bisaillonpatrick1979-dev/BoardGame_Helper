@@ -1,7 +1,7 @@
 // Jeu du pendu : le bonhomme se dessine trait par trait à chaque erreur
 import { useEffect, useMemo, useState } from "react";
 import { RotateCcw, Users, User } from "lucide-react";
-import { randomInt, sfx, useLang, useStored, vibrate } from "../lib/core.js";
+import { randomInt, sfx, useLang, useStored, vibrate, recordGame } from "../lib/core.js";
 
 const WORDS = {
   fr: {
@@ -128,6 +128,7 @@ export default function Hangman() {
         sfx.win();
         vibrate([40, 40, 80]);
         if (!twoPlayers) setStreak((s) => s + 1);
+        recordGame("hangman", "win", twoPlayers ? undefined : streak + 1);
       } else sfx.good();
     } else {
       const nowErrors = errors + 1;
@@ -135,6 +136,7 @@ export default function Hangman() {
         sfx.lose();
         vibrate([200, 80, 200]);
         if (!twoPlayers) setStreak(0);
+        recordGame("hangman", "loss");
       } else {
         sfx.bad();
         vibrate(40);

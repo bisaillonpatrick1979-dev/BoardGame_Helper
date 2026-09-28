@@ -18,6 +18,7 @@ L'app est organisée comme une vraie application mobile : en-tête, 5 onglets (A
   - Plus haut, plus bas.
 - **Outils** : scores (pas de 1/5/10/50), minuteur circulaire, banque avec transferts, roue de hasard.
 - **Réglages** : français/anglais, 8 thèmes, son.
+- **Comptes** (optionnels) : connexion par courriel, sauvegarde dans le nuage des scores, statistiques et réglages, récupération sur un autre appareil, suppression de compte, [politique de confidentialité](public/confidentialite.html).
 - **PWA hors ligne** : installable sur l'écran d'accueil, fonctionne sans connexion.
 
 ## Développement
@@ -38,7 +39,10 @@ Organisation du code :
 - `src/screens/` : écrans Accueil, Dés, Cartes, Jeux, Outils, Réglages.
 - `src/games/` : un fichier par jeu.
 - `src/cards/` : cartes à jouer SVG et paquet.
-- `src/lib/core.js` : langue, stockage, sons, hasard.
+- `src/lib/core.js` : langue, stockage, statistiques, sons, hasard.
+- `src/lib/cloud.js` et `src/lib/auth.jsx` : comptes Supabase et synchronisation (la version la plus récente de chaque donnée gagne).
+
+Base de données : projet Supabase `invoices-simple`, tables `bgh_profiles` et `bgh_saves` protégées par RLS (chaque joueur ne voit que ses données ; le champ `premium` ne peut être modifié que par le serveur).
 
 Le code des dés est dans `src/dice/` :
 

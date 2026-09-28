@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { RotateCcw, User, Users } from "lucide-react";
 import PlayingCard from "../cards/PlayingCard.jsx";
 import { RANKS, SUITS } from "../cards/deck.js";
-import { sfx, shuffle, useLang, useStored, vibrate } from "../lib/core.js";
+import { sfx, shuffle, useLang, useStored, vibrate, recordGame } from "../lib/core.js";
 import { Confetti } from "./Hangman.jsx";
 
 const SIZES = { 8: [4, 4], 10: [4, 5], 12: [4, 6] };
@@ -67,6 +67,7 @@ export default function Memory() {
         vibrate(30);
         if (Object.keys(nextFound).length === pairs) {
           sfx.win();
+          recordGame("memory", twoPlayers ? "played" : "win");
           if (!twoPlayers) {
             const key = String(pairs);
             if (!best[key] || moves + 1 < best[key]) setBest({ ...best, [key]: moves + 1 });

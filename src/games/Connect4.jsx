@@ -1,7 +1,7 @@
 // Puissance 4 : jetons qui tombent, à deux ou contre l'ordinateur
 import { useEffect, useState } from "react";
 import { Cpu, RotateCcw, Users } from "lucide-react";
-import { sfx, useLang, vibrate } from "../lib/core.js";
+import { sfx, useLang, vibrate, recordGame } from "../lib/core.js";
 
 const COLS = 7;
 const ROWS = 6;
@@ -102,6 +102,7 @@ export default function Connect4() {
     const w = findWin(next);
     if (w) {
       setScore((s) => ({ ...s, [w.player]: s[w.player] + 1 }));
+      recordGame("connect4", !vsCpu ? "played" : w.player === 1 ? "win" : "loss");
       setTimeout(() => (vsCpu && w.player === 2 ? sfx.lose() : sfx.win()), 400);
       vibrate([40, 40, 100]);
     }

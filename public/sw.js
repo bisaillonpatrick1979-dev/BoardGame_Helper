@@ -1,7 +1,7 @@
 // Service worker : l'app fonctionne hors ligne après la première visite.
 // Pages : réseau d'abord (pour recevoir les mises à jour), cache en secours.
 // Fichiers statiques (JS, CSS, images) : cache d'abord.
-const CACHE = "bgh-v3";
+const CACHE = "bgh-v4";
 const CORE = ["/", "/index.html", "/manifest.webmanifest", "/icon-192.png", "/icon-512.png", "/favicon.png"];
 
 self.addEventListener("install", (event) => {
@@ -22,14 +22,18 @@ self.addEventListener("fetch", (event) => {
   if (request.method !== "GET" || new URL(request.url).origin !== self.location.origin) return;
 
   if (request.mode === "navigate") {
+    const path = new URL(request.url).pathname;
+    const isApp = path === "/" || path === "/index.html";
     event.respondWith(
       fetch(request)
         .then((response) => {
-          const copy = response.clone();
-          caches.open(CACHE).then((cache) => cache.put("/index.html", copy));
+          if (response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE).then((cache) => cache.put(isApp ? "/index.html" : request, copy));
+          }
           return response;
         })
-        .catch(() => caches.match("/index.html"))
+        .catch(() => caches.match(isApp ? "/index.html" : request).then((hit) => hit || caches.match("/index.html")))
     );
     return;
   }

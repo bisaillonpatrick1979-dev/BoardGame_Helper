@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { ArrowDown, ArrowUp, RotateCcw } from "lucide-react";
 import { cardName, orderValue, shuffledDeck } from "../cards/deck.js";
-import { sfx, useLang, useStored, vibrate } from "../lib/core.js";
+import { sfx, useLang, useStored, vibrate, recordGame } from "../lib/core.js";
 import { DealtCard, DeckPile } from "../screens/CardsScreen.jsx";
 
 export default function HigherLower() {
@@ -39,6 +39,7 @@ export default function HigherLower() {
       setTimeout(sfx.good, 300);
     } else {
       setState("lost");
+      recordGame("higherlower", "loss", streak);
       setTimeout(sfx.lose, 300);
       vibrate([120, 60, 120]);
     }

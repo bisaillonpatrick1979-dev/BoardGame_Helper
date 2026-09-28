@@ -1,7 +1,7 @@
 // Blackjack (21) contre le croupier, avec jetons virtuels
 import { useEffect, useRef, useState } from "react";
 import { shuffledDeck } from "../cards/deck.js";
-import { sfx, useLang, useStored, vibrate } from "../lib/core.js";
+import { sfx, useLang, useStored, vibrate, recordGame } from "../lib/core.js";
 import { DealtCard } from "../screens/CardsScreen.jsx";
 
 const CHIPS = [5, 25, 100, 500];
@@ -157,6 +157,7 @@ export default function Blackjack() {
       result = "push";
     }
     setChips((c) => c + win);
+    recordGame("blackjack", result === "push" ? "draw" : result === "win" ? "win" : "loss");
     setMessage(msg);
     setOutcome(result);
     setPhase("done");
