@@ -222,6 +222,30 @@ const PIP_LAYOUT = {
   6: [[0.27, 0.25], [0.27, 0.5], [0.27, 0.75], [0.73, 0.25], [0.73, 0.5], [0.73, 0.75]]
 };
 
+// Texte d'une face personnalisée : taille ajustée à la longueur, sur 1 ou 2 lignes
+function drawLabel(ctx, text, x, y, maxW, baseSize, angle, ink) {
+  const words = text.split(/\s+/);
+  const lines = text.length > 7 && words.length > 1 ? [words.slice(0, Math.ceil(words.length / 2)).join(" "), words.slice(Math.ceil(words.length / 2)).join(" ")] : [text];
+  const longest = Math.max(...lines.map((l) => l.length));
+  const size = Math.min(baseSize, (maxW / Math.max(1, longest)) * 1.6, lines.length > 1 ? baseSize * 0.62 : baseSize);
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(angle);
+  ctx.font = `900 ${size}px "Arial Black", "Segoe UI", system-ui, sans-serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  lines.forEach((line, i) => {
+    const ly = (i - (lines.length - 1) / 2) * size * 1.05;
+    ctx.fillStyle = "rgba(0,0,0,0.3)";
+    ctx.fillText(line, 0, ly - 1.5);
+    ctx.fillStyle = ink;
+    ctx.fillText(line, 0, ly);
+  });
+  ctx.restore();
+}
+
+const isHexColor = (v) => typeof v === "string" && /^#[0-9a-f]{6}$/i.test(v.trim());
+
 function makeFaceTexture(def, faceIndex, palette) {
   const key = `${def.sides}-${faceIndex}-${palette.id}`;
   if (textureCache.has(key)) return textureCache.get(key);
@@ -255,7 +279,40 @@ function makeFaceTexture(def, faceIndex, palette) {
     }
   }
 
-  if (def.sides === 6) {
+  if (palette.labels) {
+    // Dé personnalisé : texte ou couleur sur chaque face
+    if (def.mode === "vertex") {
+      face.forEach((vi, j) => {
+        const q = pts[j];
+        const label = palette.labels[def.vertexValues[vi] - 1] || "";
+        const x = cx + (q.x - cx) * 0.56;
+        const y = cy + (q.y - cy) * 0.56;
+        const angle = Math.atan2(q.x - cx, -(q.y - cy));
+        if (isHexColor(label)) {
+          ctx.beginPath();
+          ctx.arc(x, y, TEX_SIZE * 0.09, 0, Math.PI * 2);
+          ctx.fillStyle = label;
+          ctx.fill();
+        } else drawLabel(ctx, label, x, y, TEX_SIZE * 0.3, TEX_SIZE * 0.17, angle, palette.ink);
+      });
+    } else {
+      const label = palette.labels[def.faceValues[faceIndex] - 1] || "";
+      if (isHexColor(label)) {
+        // Face entièrement colorée, avec un petit reflet
+        ctx.fillStyle = label;
+        ctx.fillRect(0, 0, TEX_SIZE, TEX_SIZE);
+        const gloss = ctx.createRadialGradient(cx * 0.7, cy * 0.6, 4, cx, cy, TEX_SIZE * 0.55);
+        gloss.addColorStop(0, "rgba(255,255,255,0.28)");
+        gloss.addColorStop(1, "rgba(0,0,0,0.12)");
+        ctx.fillStyle = gloss;
+        ctx.fillRect(0, 0, TEX_SIZE, TEX_SIZE);
+      } else {
+        const widthBySides = { 4: 0.5, 6: 0.62, 8: 0.42, 10: 0.4, 12: 0.5, 20: 0.36 };
+        const offsetY = def.sides === 10 ? TEX_SIZE * 0.06 : def.sides === 8 || def.sides === 20 ? TEX_SIZE * 0.04 : 0;
+        drawLabel(ctx, label, cx, cy + offsetY, TEX_SIZE * (widthBySides[def.sides] || 0.45), TEX_SIZE * (def.sides >= 20 ? 0.26 : 0.34), 0, palette.ink);
+      }
+    }
+  } else if (def.sides === 6) {
     const value = def.faceValues[faceIndex];
     const [p0, p1, , p3] = pts;
     const at = (s, t) => ({

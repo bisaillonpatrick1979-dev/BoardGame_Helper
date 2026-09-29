@@ -3,6 +3,7 @@ import { Dice5, Gamepad2, Puzzle, Spade } from "lucide-react";
 import { useLang } from "../lib/core.js";
 import { GAMES } from "./GamesScreen.jsx";
 import PlayingCard from "../cards/PlayingCard.jsx";
+import { PlayerChips } from "./PlayersSheet.jsx";
 
 const HERO_CARDS = [
   { id: "h1", rank: "A", suit: "spades" },
@@ -10,7 +11,7 @@ const HERO_CARDS = [
   { id: "h3", rank: "Q", suit: "diamonds" }
 ];
 
-export default function HomeScreen({ onTab, onGame, onTool }) {
+export default function HomeScreen({ onTab, onGame, onTool, players, onPlayers }) {
   const { t, lang } = useLang();
   const featured = GAMES.slice(0, 4);
 
@@ -27,6 +28,11 @@ export default function HomeScreen({ onTab, onGame, onTool }) {
           <p>{t("Dés, cartes, sablier, compteurs, argent, titres… L'app remplace ce qui manque à ton jeu, même sans Internet.", "Dice, cards, hourglass, counters, money, deeds… The app replaces what your game is missing, even offline.")}</p>
         </div>
       </section>
+
+      <div className="homePlayers">
+        <span>{t("À la table", "At the table")}</span>
+        <PlayerChips players={players} onOpen={onPlayers} />
+      </div>
 
       <div className="homeSectionTitle">
         <Puzzle size={18} />

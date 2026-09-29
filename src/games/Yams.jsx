@@ -50,7 +50,7 @@ export default function Yams({ players, theme, sound }) {
   const { t, lang } = useLang();
   const diceRef = useRef(null);
   const [setup, setSetup] = useState(true);
-  const [nbPlayers, setNbPlayers] = useState(Math.min(4, Math.max(1, players.length)));
+  const [nbPlayers, setNbPlayers] = useState(Math.min(6, Math.max(1, players.length)));
   const [sheets, setSheets] = useState([]);
   const [current, setCurrent] = useState(0);
   const [rollsLeft, setRollsLeft] = useState(3);
@@ -117,7 +117,7 @@ export default function Yams({ players, theme, sound }) {
                 <Minus size={18} />
               </button>
               <strong>{nbPlayers}</strong>
-              <button onClick={() => setNbPlayers(Math.min(4, nbPlayers + 1))}>
+              <button onClick={() => setNbPlayers(Math.min(6, nbPlayers + 1))}>
                 <Plus size={18} />
               </button>
             </div>

@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { Cpu, RotateCcw, Users } from "lucide-react";
 import { randomInt, sfx, useLang, vibrate, recordGame } from "../lib/core.js";
+import { seatName } from "../screens/PlayersSheet.jsx";
 
 const LINES = [
   [0, 1, 2], [3, 4, 5], [6, 7, 8],
@@ -48,7 +49,7 @@ function Mark({ value }) {
   return null;
 }
 
-export default function TicTacToe() {
+export default function TicTacToe({ players }) {
   const { t } = useLang();
   const [vsCpu, setVsCpu] = useState(true);
   const [hard, setHard] = useState(false);
@@ -56,6 +57,8 @@ export default function TicTacToe() {
   const [turn, setTurn] = useState("X");
   const [score, setScore] = useState({ X: 0, O: 0, draw: 0 });
   const result = winnerOf(board);
+  // Noms : en mode 2 joueurs, les deux premiers joueurs à la table
+  const nameOf = (mark) => (vsCpu ? (mark === "X" ? t("Toi", "You") : t("Ordi", "CPU")) : seatName(players, mark === "X" ? 0 : 1, t));
 
   function play(i) {
     if (board[i] || result) return;
@@ -104,12 +107,12 @@ export default function TicTacToe() {
         ? result.player === "X"
           ? t("Tu gagnes! 🎉", "You win! 🎉")
           : t("L'ordi gagne!", "Computer wins!")
-        : `${result.player} ${t("gagne! 🎉", "wins! 🎉")}`
+        : `${nameOf(result.player)} (${result.player}) ${t("gagne! 🎉", "wins! 🎉")}`
     : vsCpu
       ? turn === "X"
         ? t("À toi de jouer (X)", "Your turn (X)")
         : t("L'ordi réfléchit…", "Computer thinking…")
-      : `${t("Tour de", "Turn:")} ${turn}`;
+      : `${t("Tour de", "Turn:")} ${nameOf(turn)} (${turn})`;
 
   return (
     <div className="game ttt">
@@ -130,9 +133,9 @@ export default function TicTacToe() {
       </div>
 
       <div className="scoreStrip">
-        <span className="sx">X · {score.X}</span>
+        <span className="sx">{nameOf("X")} (X) · {score.X}</span>
         <span>{t("Nuls", "Draws")} · {score.draw}</span>
-        <span className="so">O · {score.O}</span>
+        <span className="so">{nameOf("O")} (O) · {score.O}</span>
       </div>
 
       <div className="boardWrap">

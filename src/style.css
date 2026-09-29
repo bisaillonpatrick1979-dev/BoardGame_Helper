@@ -3574,3 +3574,693 @@ button:disabled {
   width: 52px;
   height: 52px;
 }
+
+/* ---------- Joueurs à la table ---------- */
+.playersButton {
+  position: relative;
+}
+
+.countBadge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 17px;
+  background: var(--accent);
+  color: #111;
+}
+
+.homePlayers {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 8px 8px 14px;
+  border-radius: 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-weight: 800;
+  font-size: 14px;
+}
+
+.playerChips {
+  display: flex;
+  align-items: center;
+}
+
+.chipAvatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  font-size: 14px;
+  color: #fff;
+  border: 2px solid var(--bg);
+  margin-left: -8px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.chipAvatar:first-child {
+  margin-left: 0;
+}
+
+.chipAvatar.more {
+  background: var(--surface-2);
+  font-size: 11px;
+}
+
+.chipAvatar.big {
+  width: 44px;
+  height: 44px;
+  margin: 0;
+  font-size: 18px;
+  flex: none;
+}
+
+.chipAdd {
+  width: 32px;
+  height: 32px;
+  margin-left: 6px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+}
+
+.playerEditRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 16px;
+  background: var(--surface);
+}
+
+.playerEditMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.playerEditMain input {
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.25);
+  font-weight: 800;
+  font-size: 16px;
+}
+
+.playerEditBtns {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.playerEditBtns button {
+  width: 30px;
+  height: 26px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  background: var(--surface-2);
+}
+
+/* ---------- Dés spéciaux en 3D ---------- */
+.dieTypes {
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.dieTypes button.special {
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+}
+
+.dieTypes button.special.active {
+  color: #fff;
+}
+
+.customValues {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  color: var(--text);
+  font-weight: 900;
+  font-size: 17px;
+  white-space: normal;
+  min-height: 40px;
+  padding-left: 4px;
+}
+
+.colorDot {
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  box-shadow: inset 0 -3px 5px rgba(0, 0, 0, 0.3);
+}
+
+.diceLabel b.colorBadge {
+  padding: 4px;
+  min-width: 0;
+}
+
+.colorBadge i {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+}
+
+.customPick {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 14px;
+  background: var(--surface);
+  border: 2px solid transparent;
+  text-align: left;
+}
+
+.customPick.active {
+  border-color: var(--accent);
+}
+
+.customPick i {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  flex: none;
+}
+
+.customPick span {
+  flex: 1;
+  font-weight: 800;
+}
+
+.customPick small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* ---------- Livre dont tu es le héros ---------- */
+.pipDie.tumbling {
+  animation: tumble 0.16s linear infinite;
+}
+
+.pipDie.landed {
+  animation: land 0.35s cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+
+.gbStart {
+  justify-content: center;
+}
+
+.gbCover {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 24px 20px;
+  border-radius: 24px;
+  text-align: center;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(127, 29, 29, 0.55), transparent 60%),
+    linear-gradient(180deg, #1e1b4b, #0b0a1f);
+  border: 2px solid #a16207;
+  box-shadow: inset 0 0 0 6px rgba(161, 98, 7, 0.25), 0 20px 40px rgba(0, 0, 0, 0.5);
+}
+
+.gbCoverArt {
+  font-size: 72px;
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.7));
+}
+
+.gbCover h2 {
+  font-family: Georgia, serif;
+  font-size: 26px;
+  color: #fde68a;
+}
+
+.gbCover p {
+  font-family: Georgia, serif;
+  line-height: 1.5;
+  color: #e7e5e4;
+}
+
+.gbCreate {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  justify-content: center;
+}
+
+.gbDice {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  min-height: 60px;
+  flex: none;
+}
+
+.gbDice.small {
+  min-height: 46px;
+}
+
+.gbStatRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  text-align: left;
+}
+
+.gbStatRow.done {
+  border-color: var(--good);
+}
+
+.gbStatIcon {
+  font-size: 26px;
+}
+
+.gbStatText {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.gbStatText small {
+  color: var(--muted);
+}
+
+.gbStatRow b {
+  font-size: 22px;
+  color: var(--accent);
+}
+
+.gbStats {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 10px;
+  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-weight: 800;
+  font-size: 13px;
+  flex: none;
+}
+
+.gbStats button {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 4px 8px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.gbPage {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 18px 16px;
+  border-radius: 18px;
+  background:
+    radial-gradient(ellipse at 20% 10%, rgba(255, 255, 255, 0.5), transparent 60%),
+    linear-gradient(170deg, #f3e7c9, #e3cf9f);
+  color: #2b1d0e;
+  box-shadow: inset 0 0 40px rgba(120, 72, 20, 0.35), 0 12px 24px rgba(0, 0, 0, 0.4);
+}
+
+.gbPage p {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 17px;
+  line-height: 1.55;
+}
+
+.gbSectionNo {
+  font-family: Georgia, serif;
+  font-weight: 900;
+  color: #7f1d1d;
+  font-size: 18px;
+  margin-bottom: 6px;
+}
+
+.gbShop {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.gbShop button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(120, 72, 20, 0.4);
+  color: #2b1d0e;
+  font-weight: 700;
+  text-align: left;
+}
+
+.gbShop button small {
+  margin-left: auto;
+}
+
+.gbFight {
+  margin-top: 12px;
+  padding: 10px;
+  border-radius: 12px;
+  background: rgba(127, 29, 29, 0.12);
+  border: 1px solid rgba(127, 29, 29, 0.4);
+}
+
+.gbEnemy {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px;
+  font-weight: 800;
+}
+
+.gbBar {
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
+
+.gbBar i {
+  display: block;
+  height: 100%;
+  background: #b91c1c;
+  transition: width 0.4s;
+}
+
+.gbFightLog {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 14px;
+}
+
+.gbLog.hit { color: #166534; font-weight: 800; }
+.gbLog.hurt { color: #991b1b; font-weight: 800; }
+.gbLog { opacity: 0.85; }
+.gbLog:first-child { opacity: 1; animation: pop 0.3s both; }
+
+.gbTest {
+  margin-top: 12px;
+  padding: 10px;
+  border-radius: 10px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.gbTest.ok { background: rgba(22, 101, 52, 0.18); color: #14532d; }
+.gbTest.fail { background: rgba(153, 27, 27, 0.18); color: #7f1d1d; }
+
+.gbActions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: none;
+}
+
+.gbChoice {
+  padding: 13px 14px;
+  border-radius: 16px;
+  text-align: left;
+  font-weight: 800;
+  font-size: 15px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 60%, transparent), color-mix(in srgb, var(--secondary) 60%, transparent));
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.gbChoice small {
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+.gbChoice.locked {
+  background: var(--surface);
+}
+
+.topBarTitle {
+  font-size: clamp(15px, 4.6vw, 20px);
+}
+
+/* ---------- Lia, maître du jeu IA ---------- */
+.liaStart,
+.liaSetup {
+  justify-content: center;
+}
+
+.liaIntro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 22px;
+  border-radius: 24px;
+  text-align: center;
+  background: radial-gradient(circle at 50% 0%, rgba(109, 40, 217, 0.45), transparent 70%), var(--surface);
+  border: 1px solid var(--border);
+}
+
+.liaIntro p {
+  line-height: 1.5;
+}
+
+.liaAvatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  flex: none;
+  font-size: 17px;
+  background: linear-gradient(135deg, #6d28d9, #0e7490);
+  box-shadow: 0 0 14px rgba(139, 92, 246, 0.6);
+}
+
+.liaAvatar.big {
+  width: 72px;
+  height: 72px;
+  font-size: 34px;
+}
+
+.liaHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+}
+
+.liaGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+
+.liaGrid.four {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.liaGrid button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 10px 6px;
+  border-radius: 14px;
+  background: var(--surface);
+  border: 2px solid transparent;
+  font-weight: 700;
+  font-size: 13px;
+  text-align: center;
+}
+
+.liaGrid button span {
+  font-size: 22px;
+}
+
+.liaGrid button.active {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.liaBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-weight: 800;
+  flex: none;
+}
+
+.liaBar small {
+  color: var(--muted);
+}
+
+.liaChat {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px 2px;
+}
+
+.liaMsg {
+  max-width: 92%;
+  animation: pop 0.3s both;
+}
+
+.liaMsg.lia {
+  display: flex;
+  gap: 8px;
+  align-self: flex-start;
+}
+
+.liaMsg.lia p {
+  padding: 12px 14px;
+  border-radius: 4px 18px 18px 18px;
+  background: linear-gradient(170deg, #f3e7c9, #e8d6aa);
+  color: #2b1d0e;
+  font-family: Georgia, serif;
+  font-size: 16px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.liaMsg.me {
+  align-self: flex-end;
+  padding: 10px 14px;
+  border-radius: 18px 4px 18px 18px;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  font-weight: 600;
+}
+
+.liaMsg.typing p {
+  display: flex;
+  gap: 5px;
+}
+
+.liaMsg.typing i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #7c5a2c;
+  animation: pulse 0.9s ease-in-out infinite;
+}
+
+.liaMsg.typing i:nth-child(2) { animation-delay: 0.15s; }
+.liaMsg.typing i:nth-child(3) { animation-delay: 0.3s; }
+
+.liaActions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex: none;
+}
+
+.liaActions button {
+  padding: 9px 12px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--accent);
+  color: var(--accent);
+}
+
+.liaRoll {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 12px;
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--accent) 12%, var(--bg));
+  border: 1px solid var(--accent);
+  flex: none;
+}
+
+.liaDie {
+  width: 64px;
+  height: 64px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  clip-path: polygon(50% 0, 95% 25%, 95% 75%, 50% 100%, 5% 75%, 5% 25%);
+  background: linear-gradient(145deg, #a78bfa, #5b21b6);
+  font-weight: 900;
+}
+
+.liaDie span {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.liaDie small {
+  font-size: 10px;
+  opacity: 0.8;
+}
+
+.liaDie.spin {
+  animation: tumble 0.2s linear infinite;
+}
+
+.liaDie.landed {
+  animation: land 0.35s cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+
+.liaRollInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.liaRollInfo small {
+  color: var(--muted);
+}
+
+.liaGrid.four {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.liaGrid.four button {
+  font-size: 11px;
+  padding: 8px 2px;
+}

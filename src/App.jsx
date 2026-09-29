@@ -1,6 +1,6 @@
 // Board Game Helper — coquille de l'application : en-tête, écrans, barre d'onglets
 import { useEffect, useState } from "react";
-import { ChevronLeft, Dice5, Gamepad2, Home, Puzzle, Settings, Spade, UserRound } from "lucide-react";
+import { ChevronLeft, Dice5, Gamepad2, Home, Puzzle, Settings, Spade, UserRound, Users } from "lucide-react";
 import { LangContext, setSoundEnabled, useStored } from "./lib/core.js";
 import HomeScreen from "./screens/HomeScreen.jsx";
 import DiceScreen from "./screens/DiceScreen.jsx";
@@ -9,6 +9,7 @@ import GamesScreen, { GAMES } from "./screens/GamesScreen.jsx";
 import ToolsScreen, { TOOLS } from "./screens/ToolsScreen.jsx";
 import SettingsSheet, { THEMES } from "./screens/SettingsSheet.jsx";
 import AccountSheet from "./screens/AccountSheet.jsx";
+import PlayersSheet from "./screens/PlayersSheet.jsx";
 import { AuthProvider, useAuth } from "./lib/auth.jsx";
 
 const DEFAULT_PLAYERS = [
@@ -35,10 +36,18 @@ function AppShell() {
   const [tool, setTool] = useState(null);
   const [game, setGame] = useState(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [playersOpen, setPlayersOpen] = useState(false);
 
   const t = (fr, en) => (lang === "fr" ? fr : en);
 
   useEffect(() => setSoundEnabled(sound), [sound]);
+
+  // Un écran peut demander d'ouvrir le compte (ex. : Lia exige une connexion)
+  useEffect(() => {
+    const open = () => setAccountOpen(true);
+    window.addEventListener("bgh-open-account", open);
+    return () => window.removeEventListener("bgh-open-account", open);
+  }, []);
 
   // Retour d'un lien « mot de passe oublié » : ouvre le compte
   useEffect(() => {
@@ -95,6 +104,10 @@ function AppShell() {
             </span>
           )}
           <h1 className="topBarTitle">{title}</h1>
+          <button className="iconButton playersButton" onClick={() => setPlayersOpen(true)} aria-label={t("Joueurs", "Players")}>
+            <Users size={22} />
+            <b className="countBadge">{players.length}</b>
+          </button>
           <button className={`iconButton accountButton ${user ? "signedIn" : ""} sync-${sync.status}`} onClick={() => setAccountOpen(true)} aria-label={t("Compte", "Account")}>
             {user ? <span className="miniAvatar">{(profile?.display_name || user.email || "?").slice(0, 1).toUpperCase()}</span> : <UserRound size={22} />}
           </button>
@@ -104,8 +117,8 @@ function AppShell() {
         </header>
 
         <main className={`screen screen-${tab}`}>
-          {tab === "home" && <HomeScreen onTab={setTab} onGame={openGame} onTool={openTool} />}
-          {tab === "dice" && <DiceScreen theme={theme} sound={sound} />}
+          {tab === "home" && <HomeScreen onTab={setTab} onGame={openGame} onTool={openTool} players={players} onPlayers={() => setPlayersOpen(true)} />}
+          {tab === "dice" && <DiceScreen theme={theme} sound={sound} onTool={openTool} />}
           {tab === "cards" && <CardsScreen players={players} />}
           {tab === "games" && <GamesScreen game={game} onOpen={setGame} players={players} theme={theme} sound={sound} />}
           {tab === "tools" && <ToolsScreen tool={tool} onTool={setTool} players={players} setPlayers={setPlayers} />}
@@ -129,6 +142,8 @@ function AppShell() {
         </nav>
 
         {accountOpen && <AccountSheet onClose={() => setAccountOpen(false)} />}
+
+        {playersOpen && <PlayersSheet players={players} setPlayers={setPlayers} onClose={() => setPlayersOpen(false)} />}
 
         {settingsOpen && (
           <SettingsSheet

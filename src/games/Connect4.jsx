@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { Cpu, RotateCcw, Users } from "lucide-react";
 import { sfx, useLang, vibrate, recordGame } from "../lib/core.js";
+import { seatName } from "../screens/PlayersSheet.jsx";
 
 const COLS = 7;
 const ROWS = 6;
@@ -78,7 +79,7 @@ function minimax(board, depth, alpha, beta, maximizing) {
   return best;
 }
 
-export default function Connect4() {
+export default function Connect4({ players }) {
   const { t } = useLang();
   const [vsCpu, setVsCpu] = useState(true);
   const [board, setBoard] = useState(empty);
@@ -125,7 +126,7 @@ export default function Connect4() {
     setLast(null);
   }
 
-  const names = vsCpu ? { 1: t("Toi", "You"), 2: t("Ordi", "CPU") } : { 1: t("Rouge", "Red"), 2: t("Jaune", "Yellow") };
+  const names = vsCpu ? { 1: t("Toi", "You"), 2: t("Ordi", "CPU") } : { 1: seatName(players, 0, t), 2: seatName(players, 1, t) };
   const status = win
     ? `${names[win.player]} ${vsCpu && win.player === 1 ? t("gagnes! 🎉", "win! 🎉") : t("gagne!", "wins!")}`
     : full

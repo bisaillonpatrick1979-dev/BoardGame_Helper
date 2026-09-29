@@ -5,6 +5,7 @@ import PlayingCard from "../cards/PlayingCard.jsx";
 import { RANKS, SUITS } from "../cards/deck.js";
 import { sfx, shuffle, useLang, useStored, vibrate, recordGame } from "../lib/core.js";
 import { Confetti } from "./Hangman.jsx";
+import { seatName } from "../screens/PlayersSheet.jsx";
 
 const SIZES = { 8: [4, 4], 10: [4, 5], 12: [4, 6] };
 
@@ -18,7 +19,7 @@ function newBoard(pairs) {
   );
 }
 
-export default function Memory() {
+export default function Memory({ players }) {
   const { t } = useLang();
   const [pairs, setPairs] = useStored("bgh2_mem_pairs", 8);
   const [twoPlayers, setTwoPlayers] = useState(false);
@@ -112,8 +113,8 @@ export default function Memory() {
       <div className="scoreStrip">
         {twoPlayers ? (
           <>
-            <span className={player === 1 && !done ? "turnOn p1" : "p1"}>{t("Joueur 1", "Player 1")} · {p1}</span>
-            <span className={player === 2 && !done ? "turnOn p2" : "p2"}>{t("Joueur 2", "Player 2")} · {p2}</span>
+            <span className={player === 1 && !done ? "turnOn p1" : "p1"}>{seatName(players, 0, t)} · {p1}</span>
+            <span className={player === 2 && !done ? "turnOn p2" : "p2"}>{seatName(players, 1, t)} · {p2}</span>
           </>
         ) : (
           <>
@@ -143,7 +144,7 @@ export default function Memory() {
             {twoPlayers
               ? p1 === p2
                 ? t("Égalité!", "Tie!")
-                : `${t("Joueur", "Player")} ${p1 > p2 ? 1 : 2} ${t("gagne! 🎉", "wins! 🎉")}`
+                : `${seatName(players, p1 > p2 ? 0 : 1, t)} ${t("gagne! 🎉", "wins! 🎉")}`
               : `${t("Bravo! 🎉", "Well done! 🎉")} ${moves} ${t("coups", "moves")}`}
           </strong>
         </div>

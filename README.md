@@ -9,7 +9,10 @@ L'app est organisée comme une vraie application mobile : en-tête, 5 onglets (A
 - **Dés 3D réalistes** : D4 à D20 en vrais polyèdres avec physique, ombres et son. Touche ou glisse pour lancer, touche un dé pour le garder. 7 couleurs.
 - **Cartes réalistes** : jeu de 52 cartes dessiné en vectoriel (vraie disposition des enseignes, figures illustrées, dos décoré), retournement 3D.
   - Piger (pioche sans remise, 1 à 8 jeux, jokers), Mains privées (passe le téléphone), Bataille, Cartes perso.
+- **Joueurs à la table** : ajoute tes amis présents (nom, couleur, ordre). La liste sert partout : jeux à 2, Yam's, mains de cartes, bataille, scores, banque, compteurs, ordre de jeu, Lia.
 - **Jeux** :
+  - Aventure avec Lia : jeu de rôle avec une maître du jeu IA (seul ou toute la table), jets de dés demandés par Lia. Compte requis, quota quotidien.
+  - La Crypte du Roi-Corbeau : livre dont tu es le héros original (30 sections), fiche de personnage aux dés, combats, chance, objets, sauvegarde.
   - Pendu : le bonhomme se dessine trait par trait, 7 catégories, mode 2 joueurs avec mot secret.
   - Yam's : 5 dés 3D, 3 lancers, feuille de score de 13 cases, 1 à 4 joueurs.
   - Blackjack contre le croupier, avec jetons.
@@ -21,7 +24,7 @@ L'app est organisée comme une vraie application mobile : en-tête, 5 onglets (A
   - Scores, minuteur, sablier animé (se retourne), compteurs (vies, armées, ressources…).
   - Banque avec transferts.
   - Kit immobilier : cartes événement « Surprise » et « Coffre » (texte original, modifiables pour recopier une carte perdue) et titres de propriété modifiables, avec propriétaire, maisons, hypothèque et paiement du loyer relié à la banque.
-  - Dés spéciaux (couleurs, lettres, oui/non, directions ou faces sur mesure), sac de tuiles de lettres, ordre de jeu (qui commence, à qui le tour), roue de hasard.
+  - Dés spéciaux (couleurs, lettres, oui/non, directions ou faces sur mesure) — aussi lançables en 3D dans l'écran Dés (bouton ✨), sac de tuiles de lettres, ordre de jeu (qui commence, à qui le tour), roue de hasard.
 - **Réglages** : français/anglais, 8 thèmes, son.
 - **Comptes** (optionnels) : connexion par courriel, sauvegarde dans le nuage des scores, statistiques et réglages, récupération sur un autre appareil, suppression de compte, [politique de confidentialité](public/confidentialite.html).
 - **PWA hors ligne** : installable sur l'écran d'accueil, fonctionne sans connexion.
@@ -55,6 +58,11 @@ Le code des dés est dans `src/dice/` :
 - `diceGeometry.js` : géométrie des polyèdres, arêtes arrondies, textures des faces.
 - `DiceEngine.js` : scène 3D, physique, lancer, lecture du résultat, dés gardés.
 - `Dice3D.jsx` : composant React.
+
+## Lia (IA)
+
+Fonction serveur Supabase `bgh-lia` (projet `invoices-simple`) : vérifie le joueur connecté, applique un quota quotidien (`bgh_ai_usage` : 40 messages gratuits, 400 Premium) puis appelle Claude (modèle Haiku).
+La clé doit être ajoutée dans Supabase → Edge Functions → Secrets : `ANTHROPIC_API_KEY`.
 
 ## Déploiement
 

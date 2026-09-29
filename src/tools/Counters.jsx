@@ -120,6 +120,25 @@ export default function Counters({ players }) {
                 </button>
               ))}
             </div>
+            <h3 className="sheetLabel">{t("Un compteur par joueur", "One counter per player")}</h3>
+            <div className="templateGrid">
+              {TEMPLATES.slice(0, 5).map((tpl) => (
+                <button
+                  key={`p-${tpl.fr}`}
+                  onClick={() => {
+                    const base = Date.now();
+                    setCounters([
+                      ...counters,
+                      ...players.map((p, i) => ({ id: base + i, name: `${p.name} ${tpl.icon}`, value: tpl.start, start: tpl.start, color: p.color || COLORS[(counters.length + i) % COLORS.length] }))
+                    ]);
+                    setAdding(false);
+                  }}
+                >
+                  <span>{tpl.icon}</span>
+                  {tpl[lang]} × {players.length}
+                </button>
+              ))}
+            </div>
             <h3 className="sheetLabel">{t("Ou sur mesure", "Or custom")}</h3>
             <form
               className="addRow"

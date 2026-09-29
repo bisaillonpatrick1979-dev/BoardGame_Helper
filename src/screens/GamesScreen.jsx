@@ -8,8 +8,26 @@ import TicTacToe from "../games/TicTacToe.jsx";
 import Memory from "../games/Memory.jsx";
 import HigherLower from "../games/HigherLower.jsx";
 import Poker from "../games/poker/Poker.jsx";
+import Gamebook from "../games/gamebook/Gamebook.jsx";
+import LiaAdventure from "../games/lia/LiaAdventure.jsx";
 
 export const GAMES = [
+  {
+    id: "lia",
+    emoji: "✨",
+    name: { fr: "Aventure avec Lia", en: "Adventure with Lia" },
+    desc: { fr: "Jeu de rôle : une IA maître du jeu", en: "Role-play with an AI game master" },
+    colors: ["#6d28d9", "#0e7490"],
+    component: LiaAdventure
+  },
+  {
+    id: "gamebook",
+    emoji: "🐦‍⬛",
+    name: { fr: "La Crypte du Roi-Corbeau", en: "The Raven King's Crypt" },
+    desc: { fr: "Aventure dont tu es le héros : combats aux dés", en: "Choose-your-path adventure with dice combat" },
+    colors: ["#1e1b4b", "#7f1d1d"],
+    component: Gamebook
+  },
   {
     id: "hangman",
     emoji: "🪢",

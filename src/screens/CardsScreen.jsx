@@ -136,7 +136,7 @@ export function Fan({ cards, faceUp, width = 70, selected, onSelect }) {
 
 function HandsMode({ players }) {
   const { t } = useLang();
-  const seats = players.length >= 2 ? players.slice(0, 6) : [{ id: 1, name: "Joueur 1" }, { id: 2, name: "Joueur 2" }];
+  const seats = players.length >= 2 ? players.slice(0, 8) : [{ id: 1, name: "Joueur 1" }, { id: 2, name: "Joueur 2" }];
   const [cardsEach, setCardsEach] = useState(5);
   const [hands, setHands] = useState(null);
   const [turn, setTurn] = useState(0);
@@ -222,7 +222,7 @@ function HandsMode({ players }) {
 
 function BattleMode({ players }) {
   const { t } = useLang();
-  const seats = players.length >= 2 ? players.slice(0, 4) : [{ id: 1, name: "Joueur 1" }, { id: 2, name: "Joueur 2" }];
+  const seats = players.length >= 2 ? players.slice(0, 6) : [{ id: 1, name: "Joueur 1" }, { id: 2, name: "Joueur 2" }];
   const [deck, setDeck] = useState(() => shuffledDeck());
   const [round, setRound] = useState(null);
   const [wins, setWins] = useState({});

@@ -2,9 +2,10 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { DiceEngine } from "./DiceEngine.js";
 import { DICE_PALETTES } from "./diceGeometry.js";
+import { isHexColor } from "./customDice.js";
 
 const Dice3D = forwardRef(function Dice3D(
-  { sides = 6, count = 1, paletteId = "ivory", felt = "#16325c", sound = true, compact = false, className = "", onRollStart, onResult, hint, canRoll, canHold },
+  { sides = 6, count = 1, paletteId = "ivory", customPalette = null, felt = "#16325c", sound = true, compact = false, className = "", onRollStart, onResult, hint, canRoll, canHold },
   ref
 ) {
   const hostRef = useRef(null);
@@ -50,7 +51,8 @@ const Dice3D = forwardRef(function Dice3D(
   }, []);
 
   const resetDice = () => {
-    const palette = DICE_PALETTES.find((p) => p.id === paletteId) || DICE_PALETTES[0];
+    // Dé personnalisé (faces texte/couleur) ou couleur standard
+    const palette = customPalette || DICE_PALETTES.find((p) => p.id === paletteId) || DICE_PALETTES[0];
     engineRef.current?.setDice(sides, count, palette);
     setRolling(false);
   };
@@ -58,7 +60,7 @@ const Dice3D = forwardRef(function Dice3D(
   useEffect(() => {
     resetDice();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sides, count, paletteId]);
+  }, [sides, count, paletteId, customPalette?.id]);
 
   useEffect(() => {
     engineRef.current?.setFelt(felt);
@@ -88,7 +90,17 @@ const Dice3D = forwardRef(function Dice3D(
             className={`diceLabel ${label.held ? "diceLabelHeld" : ""}`}
             style={{ left: `${label.x}px`, top: `${label.y}px` }}
           >
-            <b>{label.value}</b>
+            {customPalette?.labels ? (
+              isHexColor(customPalette.labels[label.value - 1]) ? (
+                <b className="colorBadge">
+                  <i style={{ background: customPalette.labels[label.value - 1] }} />
+                </b>
+              ) : (
+                <b>{customPalette.labels[label.value - 1]}</b>
+              )
+            ) : (
+              <b>{label.value}</b>
+            )}
           </span>
         ))}
       {hint && <div className="diceTrayHint">{hint}</div>}

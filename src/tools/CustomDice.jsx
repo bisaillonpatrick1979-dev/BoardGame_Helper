@@ -31,12 +31,17 @@ function Face({ die, value, rolling }) {
   );
 }
 
+// Dés offerts au départ (les mêmes partout dans l'app)
+export function defaultCustomDice(lang) {
+  return [
+    { id: 1, name: PRESETS[0][lang], faces: PRESETS[0].faces, color: PRESETS[0].color },
+    { id: 2, name: PRESETS[1][lang], faces: PRESETS[1].faces, color: PRESETS[1].color }
+  ];
+}
+
 export default function CustomDice() {
   const { t, lang } = useLang();
-  const [dice, setDice] = useStored("bgh2_custom_dice", () => [
-    { ...PRESETS[0], id: 1, name: PRESETS[0][lang] },
-    { ...PRESETS[1], id: 2, name: PRESETS[1][lang] }
-  ]);
+  const [dice, setDice] = useStored("bgh2_custom_dice", () => defaultCustomDice(lang));
   const [selected, setSelected] = useState(() => dice.map((d) => d.id).slice(0, 1));
   const [results, setResults] = useState({});
   const [rolling, setRolling] = useState(false);
