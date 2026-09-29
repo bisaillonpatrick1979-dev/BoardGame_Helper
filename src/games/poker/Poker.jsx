@@ -1,9 +1,10 @@
-// Poker Texas Hold'em contre des joueurs ordinateur
+// Poker Texas Hold'em ou Omaha (sans limite / pot-limit) contre des joueurs ordinateur
 import { useEffect, useMemo, useState } from "react";
 import { Minus, Plus, RotateCcw } from "lucide-react";
 import PlayingCard from "../../cards/PlayingCard.jsx";
-import { recordGame, sfx, useLang, vibrate } from "../../lib/core.js";
-import { HAND_NAMES, act, botDecision, legalActions, newTable, pot, startHand } from "./engine.js";
+import { recordGame, sfx, useLang, useStored, vibrate } from "../../lib/core.js";
+import { HAND_NAMES, act, botDecision, evaluateOmaha, legalActions, newTable, pot, startHand } from "./engine.js";
+import "./poker.css";
 
 // Positions des adversaires autour de la table (en % de la table)
 const SEATS = {
@@ -31,17 +32,41 @@ function actionLabel(action, t) {
 function Setup({ onStart }) {
   const { t } = useLang();
   const [bots, setBots] = useState(3);
+  // Réglages sauvegardés : variante et limite de mise
+  const [variant, setVariant] = useStored("bgh2_poker_variant", "holdem");
+  const [limit, setLimit] = useStored("bgh2_poker_limit", "nl");
+  const omaha = variant === "omaha";
   return (
     <div className="game yamsSetup">
-      <div className="setupCard">
-        <div className="setupIcon">♠️</div>
-        <h2>Texas Hold'em</h2>
+      <div className="setupCard pk-setup">
+        <div className="setupIcon">{omaha ? "♦️" : "♠️"}</div>
+        <div className="segmented small">
+          <button className={!omaha ? "active" : ""} onClick={() => setVariant("holdem")}>
+            Texas Hold'em
+          </button>
+          <button className={omaha ? "active" : ""} onClick={() => setVariant("omaha")}>
+            Omaha
+          </button>
+        </div>
         <p className="muted">
-          {t(
-            "2 cartes à toi, 5 cartes communes. Fais la meilleure main de 5 cartes ou fais passer les autres! Les blindes doublent toutes les 8 mains.",
-            "2 cards for you, 5 shared cards. Make the best 5-card hand or make everyone fold! Blinds double every 8 hands."
-          )}
+          {omaha
+            ? t(
+                "4 cartes à toi, 5 cartes communes. Ta main doit utiliser EXACTEMENT 2 de tes cartes et 3 du tableau. Les blindes doublent toutes les 8 mains.",
+                "4 cards for you, 5 shared cards. Your hand must use EXACTLY 2 of your cards and 3 from the board. Blinds double every 8 hands."
+              )
+            : t(
+                "2 cartes à toi, 5 cartes communes. Fais la meilleure main de 5 cartes ou fais passer les autres! Les blindes doublent toutes les 8 mains.",
+                "2 cards for you, 5 shared cards. Make the best 5-card hand or make everyone fold! Blinds double every 8 hands."
+              )}
         </p>
+        <div className="segmented small">
+          <button className={limit === "nl" ? "active" : ""} onClick={() => setLimit("nl")}>
+            {t("Sans limite", "No-limit")}
+          </button>
+          <button className={limit === "pl" ? "active" : ""} onClick={() => setLimit("pl")}>
+            Pot-limit
+          </button>
+        </div>
         <div className="optionRow">
           <span>{t("Adversaires", "Opponents")}</span>
           <div className="stepper">
@@ -55,7 +80,7 @@ function Setup({ onStart }) {
           </div>
         </div>
         <div className="setupNames">1 000 {t("jetons chacun", "chips each")}</div>
-        <button className="bigAction" onClick={() => onStart(bots)}>
+        <button className="bigAction" onClick={() => onStart(bots, variant, limit)}>
           {t("S'asseoir à la table", "Take a seat")}
         </button>
       </div>
@@ -78,8 +103,8 @@ export default function Poker({ players }) {
   const bustedOut = state && me.chips <= 0 && state.stage === "done";
   const champion = state && state.stage === "done" && state.players.slice(1).every((p) => p.chips <= 0);
 
-  function start(bots) {
-    const table = newTable({ playerName: players?.[0]?.name || t("Toi", "You"), bots });
+  function start(bots, variant = "holdem", limit = "nl") {
+    const table = newTable({ playerName: players?.[0]?.name || t("Toi", "You"), bots, variant, limit });
     setState(startHand(table));
     sfx.flip();
   }
@@ -129,6 +154,12 @@ export default function Poker({ players }) {
 
   if (!state) return <Setup onStart={start} />;
 
+  const omaha = state.variant === "omaha";
+  // Omaha : on montre à l'abattage les 5 cartes utilisées par le gagnant (2 privées + 3 du tableau)
+  const showdownWinner = omaha && state.stage === "done" ? state.players.find((p) => p.best && state.winners?.some((w) => w.id === p.id)) : null;
+  const inBest = (p, card) => !p?.best || p.best.includes(card.id);
+  const myOmahaHand = omaha && state.board.length >= 3 && !me.folded && me.hole.length === 4 ? HAND_NAMES[lang][evaluateOmaha(me.hole, state.board)[0]] : null;
+
   const showCards = (p) => state.stage === "done" && state.winners?.some((w) => w.hand !== null) && p.inHand && !p.folded;
 
   function doAction(action) {
@@ -141,15 +172,20 @@ export default function Poker({ players }) {
     ? [
         [t("Min", "Min"), legal.minRaiseTo],
         ["½ pot", state.currentBet + Math.round(potSize / 2 / 10) * 10],
-        ["Pot", state.currentBet + Math.round(potSize / 10) * 10],
+        ["Pot", state.limit === "pl" ? legal.maxRaiseTo : state.currentBet + Math.round(potSize / 10) * 10],
         [t("Tapis", "All-in"), legal.maxRaiseTo]
-      ].map(([label, v]) => [label, Math.min(legal.maxRaiseTo, Math.max(legal.minRaiseTo, v))])
+      ]
+        // En pot-limit, « Pot » est déjà le maximum : pas de bouton tapis en double
+        .filter(([label]) => state.limit !== "pl" || label !== t("Tapis", "All-in"))
+        .map(([label, v]) => [label, Math.min(legal.maxRaiseTo, Math.max(legal.minRaiseTo, v))])
     : [];
 
   return (
-    <div className="game poker">
+    <div className={`game poker ${omaha ? "pk-omaha" : ""}`}>
       <div className="pokerInfo">
         <span>
+          {omaha && <b className="pk-tag">Omaha{state.limit === "pl" ? " PL" : ""}</b>}
+          {!omaha && state.limit === "pl" && <b className="pk-tag">PL</b>}
           {t("Main", "Hand")} {state.handNo}
         </span>
         <span>
@@ -173,7 +209,7 @@ export default function Poker({ players }) {
             >
               <div className="seatCards">
                 {p.hole.map((c, j) => (
-                  <PlayingCard key={j} card={c} faceUp={showCards(p)} width={30} />
+                  <PlayingCard key={j} card={c} faceUp={showCards(p)} width={omaha ? 27 : 30} className={omaha && p.best && showCards(p) && !inBest(p, c) ? "pk-unused" : ""} />
                 ))}
               </div>
               <div className="seatName">
@@ -191,7 +227,11 @@ export default function Poker({ players }) {
           <div className="pokerBoard">
             {Array.from({ length: 5 }).map((_, k) =>
               state.board[k] ? (
-                <div key={`${state.handNo}-${k}`} className="dealIn" style={{ animationDelay: `${(k < 3 ? k : 0) * 90}ms` }}>
+                <div
+                  key={`${state.handNo}-${k}`}
+                  className={`dealIn ${showdownWinner && !inBest(showdownWinner, state.board[k]) ? "dim" : ""}`}
+                  style={{ animationDelay: `${(k < 3 ? k : 0) * 90}ms` }}
+                >
                   <PlayingCard card={state.board[k]} width={48} />
                 </div>
               ) : (
@@ -208,8 +248,12 @@ export default function Poker({ players }) {
       <div className={`pokerMe ${myTurn ? "acting" : ""} ${state.winners?.some((w) => w.id === "me") ? "winner" : ""}`}>
         <div className="myCards">
           {me.hole.map((c, j) => (
-            <div key={`${state.handNo}-${j}`} className="dealIn" style={{ animationDelay: `${j * 120}ms` }}>
-              <PlayingCard card={c} width={64} faceUp={!me.folded || state.stage === "done"} />
+            <div
+              key={`${state.handNo}-${j}`}
+              className={`dealIn ${omaha && me.best && state.stage === "done" && !inBest(me, c) ? "dim" : ""}`}
+              style={{ animationDelay: `${j * 120}ms` }}
+            >
+              <PlayingCard card={c} width={omaha ? 50 : 64} faceUp={!me.folded || state.stage === "done"} />
             </div>
           ))}
         </div>
@@ -221,6 +265,7 @@ export default function Poker({ players }) {
           <span className="myChips">💰 {me.chips}</span>
           {me.bet > 0 && <span className="seatBet static">{t("Mise", "Bet")} {me.bet}</span>}
           {me.lastAction && !myTurn && <span className="muted">{actionLabel(me.lastAction, t)}</span>}
+          {myOmahaHand && <span className="pk-handName">{myOmahaHand}</span>}
         </div>
       </div>
 
@@ -264,7 +309,7 @@ export default function Poker({ players }) {
                 {t("Annuler", "Cancel")}
               </button>
               <button className="bigAction gold" onClick={() => doAction({ type: "raise", to: raiseTo })}>
-                {raiseTo >= legal.maxRaiseTo ? t("Tapis", "All-in") : `${t("Relancer à", "Raise to")} ${raiseTo}`}
+                {raiseTo >= legal.maxRaiseTo && legal.maxRaiseTo === me.bet + me.chips ? t("Tapis", "All-in") : `${t("Relancer à", "Raise to")} ${raiseTo}`}
               </button>
             </div>
           </div>

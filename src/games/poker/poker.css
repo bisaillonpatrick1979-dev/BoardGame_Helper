@@ -1,0 +1,363 @@
+/* ---------- Poker : Omaha, 5 cartes fermé et poker vidéo (classes préfixées pk-, dp-, vp-) ---------- */
+
+/* Réglages de la table */
+.pk-setup .segmented {
+  align-self: stretch;
+}
+
+.pk-tag {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 900;
+  color: #111;
+  background: var(--accent);
+}
+
+.pk-handName {
+  font-size: 12px;
+  font-weight: 800;
+  color: #86efac;
+}
+
+/* Omaha : 4 cartes par siège, légèrement superposées */
+.pk-omaha .seatCards .pcard + .pcard {
+  margin-left: -14px;
+}
+
+.pk-omaha .myCards {
+  gap: 3px;
+}
+
+.pk-unused {
+  opacity: 0.4;
+}
+
+/* ---------- 5 cartes fermé ---------- */
+.dp .seatCards .pcard + .pcard {
+  margin-left: -18px;
+}
+
+.dp .seatCards {
+  height: 38px;
+}
+
+.dp-stage {
+  padding: 3px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fde68a;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.dp-center {
+  top: 58%;
+  gap: 8px;
+}
+
+.dp-deck {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dp-me {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px 10px;
+  border-radius: 20px;
+  background: var(--surface);
+  border: 2px solid var(--border);
+}
+
+.dp-me.acting {
+  border-color: var(--accent);
+}
+
+.dp-me.winner {
+  border-color: var(--good);
+  box-shadow: 0 0 18px rgba(34, 197, 94, 0.6);
+}
+
+.dp-meHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  min-height: 22px;
+}
+
+.dp-meHead strong {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dp-meHead .pk-handName {
+  margin-left: auto;
+  font-size: 13px;
+}
+
+.dp-cards {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  padding: 10px 0 8px;
+}
+
+.dp-card {
+  position: relative;
+  transition: transform 0.18s, opacity 0.18s;
+}
+
+.dp-card.toss {
+  transform: translateY(10px);
+  opacity: 0.55;
+}
+
+.dp-card.keep {
+  transform: translateY(-8px);
+}
+
+.dp-card .dp-mark {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  font-size: 16px;
+  color: #fff;
+  background: #dc2626;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}
+
+.dp-hint {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.dp-hint.bad {
+  color: var(--bad);
+}
+
+/* ---------- Poker vidéo ---------- */
+.vp {
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.vp-top {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex: none;
+}
+
+.vp-top .segmented {
+  flex: 1;
+}
+
+.vp-top .segmented button:disabled {
+  opacity: 0.5;
+}
+
+.vp-machine {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 22px;
+  background: linear-gradient(180deg, #0b1f5c, #06113a);
+  border: 3px solid #d4a017;
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.5), 0 14px 30px rgba(0, 0, 0, 0.5);
+  justify-content: space-between;
+}
+
+.vp-pay {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  font-weight: 800;
+  color: #fde047;
+  font-variant-numeric: tabular-nums;
+  text-transform: uppercase;
+  flex: none;
+}
+
+.vp-pay td {
+  padding: 3px 4px;
+  text-align: right;
+  line-height: 1.25;
+  border-bottom: 1px solid rgba(253, 224, 71, 0.08);
+}
+
+.vp-pay td:first-child {
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 170px;
+}
+
+.vp-pay td.col {
+  background: rgba(220, 38, 38, 0.45);
+  color: #fff;
+}
+
+.vp-pay tr.hint td {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.vp-pay tr.hit td {
+  background: #fde047;
+  color: #0b1f5c;
+  animation: vpBlink 0.5s steps(2) 4;
+}
+
+@keyframes vpBlink {
+  50% {
+    background: #fff;
+  }
+}
+
+.vp-banner {
+  text-align: center;
+  font-weight: 900;
+  font-size: 16px;
+  min-height: 24px;
+  color: #fff;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+  flex: none;
+}
+
+.vp-banner.win {
+  color: #fde047;
+  animation: pop 0.4s both;
+}
+
+.vp-banner.muted {
+  font-size: 14px;
+  color: #93c5fd;
+}
+
+.vp-cards {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  flex: none;
+  width: 100%;
+}
+
+.vp-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+}
+
+.vp-slot .vp-held {
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  padding: 3px 0;
+  width: 100%;
+  text-align: center;
+  border-radius: 8px;
+  color: #93c5fd;
+  background: rgba(255, 255, 255, 0.06);
+  min-height: 36px;
+  display: grid;
+  place-items: center;
+}
+
+.vp-slot.held .vp-held {
+  color: #0b1f5c;
+  background: #fde047;
+}
+
+.vp-slot.held .pcard {
+  filter: drop-shadow(0 0 8px #fde047);
+}
+
+.vp-wild {
+  position: absolute;
+  top: 36%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-12deg);
+  padding: 1px 6px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 900;
+  color: #fff;
+  background: #7c3aed;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.vp-meters {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  flex: none;
+}
+
+.vp-meters div {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3px 0;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.35);
+  font-size: 10px;
+  font-weight: 800;
+  color: #93c5fd;
+  letter-spacing: 0.05em;
+}
+
+.vp-meters b {
+  font-size: 18px;
+  color: #fde047;
+  font-variant-numeric: tabular-nums;
+}
+
+.vp-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.4fr;
+  gap: 8px;
+  flex: none;
+}
+
+.vp-controls .bigAction {
+  padding: 0 8px;
+  font-size: 15px;
+}
+
+.vp-controls .bigAction:disabled {
+  opacity: 0.45;
+}
+
+@media (min-width: 600px) {
+  .vp-pay {
+    font-size: 13px;
+  }
+}

@@ -11,6 +11,23 @@ import SettingsSheet, { THEMES } from "./screens/SettingsSheet.jsx";
 import AccountSheet from "./screens/AccountSheet.jsx";
 import PlayersSheet from "./screens/PlayersSheet.jsx";
 import { AuthProvider, useAuth } from "./lib/auth.jsx";
+import { PENDING_JOIN_KEY } from "./net/OnlineScreen.jsx";
+
+// Lien d'invitation « ?join=CODE&h=empreinte » : on le garde de côté puis on nettoie l'adresse
+function takeInviteFromUrl() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const code = (params.get("join") || "").toUpperCase();
+    if (!/^[A-Z0-9]{6}$/.test(code)) return false;
+    const pin = params.get("h");
+    sessionStorage.setItem(PENDING_JOIN_KEY, JSON.stringify({ code, pin: pin && /^[0-9a-f]{10}$/.test(pin) ? pin : null }));
+    window.history.replaceState(null, "", window.location.pathname);
+    return true;
+  } catch {
+    return false;
+  }
+}
+const INVITED = typeof window !== "undefined" && takeInviteFromUrl();
 
 const DEFAULT_PLAYERS = [
   { id: 1, name: "Joueur 1", score: 0, money: 1500 },
@@ -32,9 +49,10 @@ function AppShell() {
   const [theme, setTheme] = useStored("bgh2_theme", "classic");
   const [sound, setSound] = useStored("bgh2_sound", true);
   const [players, setPlayers] = useStored("bgh2_players", DEFAULT_PLAYERS);
-  const [tab, setTab] = useState("home");
+  // Arrivé par un lien d'invitation : on ouvre directement « Jouer ensemble »
+  const [tab, setTab] = useState(INVITED ? "games" : "home");
   const [tool, setTool] = useState(null);
-  const [game, setGame] = useState(null);
+  const [game, setGame] = useState(INVITED ? "online" : null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [playersOpen, setPlayersOpen] = useState(false);
 

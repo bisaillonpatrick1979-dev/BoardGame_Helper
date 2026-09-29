@@ -3,14 +3,26 @@ import { Dice5, Gamepad2, Puzzle, Spade } from "lucide-react";
 import { useLang } from "../lib/core.js";
 import { GAMES } from "./GamesScreen.jsx";
 import { PlayerChips } from "./PlayersSheet.jsx";
+import { useRoom } from "../net/room.js";
 
 export default function HomeScreen({ onTab, onGame, onTool, players, onPlayers }) {
   const { t, lang } = useLang();
-  // Les deux premiers jeux (Lia et le livre-jeu) sont déjà en vedette plus haut
-  const featured = GAMES.slice(2, 6);
+  const room = useRoom();
+  // Jeux vedettes (Jouer ensemble, Lia et le livre-jeu ont déjà leur bouton plus haut)
+  const featured = GAMES.filter((g) => ["solitaire", "poker", "crossword", "yams"].includes(g.id));
 
   return (
     <div className="home">
+      {/* Jouer ensemble : chacun sur son téléphone */}
+      <button className="homeTogether" onClick={() => onGame("online")}>
+        <span className="homeTogetherIcon">📱📱</span>
+        <span className="homeTogetherText">
+          <strong>{room.code ? `${t("Partie en cours", "Game in progress")} · ${room.code}` : t("Jouer ensemble", "Play together")}</strong>
+          <small>{t("Poker, cartes, dés… chacun sur son téléphone. Invite tes amis par texto!", "Poker, cards, dice… each on your own phone. Invite friends by text!")}</small>
+        </span>
+        {room.code && <i className="homeTogetherLive" />}
+      </button>
+
       {/* Les deux aventures en vedette : livre dont tu es le héros et jeu de rôle avec Lia (IA) */}
       <section className="homeAdventures">
         <button className="adventureCard advBook" onClick={() => onGame("gamebook")}>

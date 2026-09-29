@@ -10,13 +10,20 @@ L'app est organisée comme une vraie application mobile : en-tête, 5 onglets (A
 - **Cartes réalistes** : jeu de 52 cartes dessiné en vectoriel (vraie disposition des enseignes, figures illustrées, dos décoré), retournement 3D.
   - Piger (pioche sans remise, 1 à 8 jeux, jokers), Mains privées (passe le téléphone), Bataille, Cartes perso.
 - **Joueurs à la table** : ajoute tes amis présents (nom, couleur, ordre). La liste sert partout : jeux à 2, Yam's, mains de cartes, bataille, scores, banque, compteurs, ordre de jeu, Lia.
+- **Jouer ensemble (plusieurs téléphones)** : l'hôte crée une partie et envoie un lien par texto, courriel ou code QR. Les amis l'ouvrent dans leur navigateur, sans rien installer ni créer de compte.
+  - Poker (Hold'em ou Omaha, ordis en renfort), Cartes libres (paquet partagé, chacun sa main : pour n'importe quel jeu de cartes), Dés partagés (tout le monde voit tous les lancers), Puissance 4 à deux téléphones.
+  - L'hôte est l'arbitre : il vérifie chaque action. Chaque joueur reçoit seulement SA vue, chiffrée de bout en bout (ECDH P-256 + AES-GCM) : impossible de voir les cartes des autres ou de jouer à leur place.
+  - Reprise automatique après un rechargement ; l'hôte peut retirer un joueur.
 - **Jeux** :
+  - Solitaires : Klondike (1 ou 3 cartes), FreeCell, Araignée (1, 2 ou 4 couleurs), Pyramide, Golf — annuler, indice, chrono, sauvegarde.
+  - Mots croisés (grilles générées, plus de 500 définitions en français, 3 niveaux) et Mots cachés (15 thèmes).
+  - Poker vidéo (Jacks or Better, Deuces Wild) et Poker 5 cartes fermé contre l'ordinateur.
   - Aventure avec Lia : jeu de rôle avec une maître du jeu IA (seul ou toute la table), jets de dés demandés par Lia. Compte requis, quota quotidien.
   - La Crypte du Roi-Corbeau : livre dont tu es le héros original (30 sections), fiche de personnage aux dés, combats, chance, objets, sauvegarde.
   - Pendu : le bonhomme se dessine trait par trait, 7 catégories, mode 2 joueurs avec mot secret.
   - Yam's : 5 dés 3D, 3 lancers, feuille de score de 13 cases, 1 à 4 joueurs.
   - Blackjack contre le croupier, avec jetons.
-  - Poker Texas Hold'em contre 1 à 5 joueurs ordinateur (relances, tapis, pots secondaires, blindes qui montent).
+  - Poker Texas Hold'em ou Omaha (sans limite ou pot-limit) contre 1 à 5 joueurs ordinateur (relances, tapis, pots secondaires, blindes qui montent).
   - Puissance 4 et Tic-tac-toe : à deux ou contre l'ordinateur.
   - Memory avec les cartes, seul ou à deux.
   - Plus haut, plus bas.
@@ -58,6 +65,14 @@ Le code des dés est dans `src/dice/` :
 - `diceGeometry.js` : géométrie des polyèdres, arêtes arrondies, textures des faces.
 - `DiceEngine.js` : scène 3D, physique, lancer, lecture du résultat, dés gardés.
 - `Dice3D.jsx` : composant React.
+
+Parties en réseau : `src/net/` (`room.js` : salle, présence et arbitrage ; `crypto.js` : chiffrement ; `games/` : règles de chaque jeu en réseau ; `views/` : écrans). Transport : Supabase Realtime (canal `bgh-room-CODE`, aucune donnée de partie n'est enregistrée sur le serveur).
+
+## Sécurité
+
+- Base de données : RLS sur toutes les tables `bgh_*`, le champ `premium` ne peut pas être modifié par le joueur, maximum 300 sauvegardes de 200 ko par compte, droits TRUNCATE retirés.
+- En-têtes HTTP (vercel.json) : Content-Security-Policy stricte, X-Frame-Options, nosniff, Referrer-Policy, Permissions-Policy.
+- À activer dans Supabase → Authentication → « Leaked password protection » (refuse les mots de passe déjà piratés).
 
 ## Lia (IA)
 

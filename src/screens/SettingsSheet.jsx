@@ -3,7 +3,7 @@ import { Check, Volume2, VolumeX, X } from "lucide-react";
 import { useLang } from "../lib/core.js";
 
 // Version affichée dans les réglages (à monter à chaque publication)
-export const APP_VERSION = "2.4.0";
+export const APP_VERSION = "2.5.0";
 
 export const THEMES = [
   { id: "classic", fr: "Néon classique", en: "Classic Neon", bg: "#070b1d", colors: ["#2563eb", "#7c3aed"], felt: "#163a6b" },

@@ -1,7 +1,7 @@
 {
   "name": "board-game-helper",
   "private": true,
-  "version": "2.4.0",
+  "version": "2.5.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -12,6 +12,7 @@
     "@supabase/supabase-js": "^2.45.0",
     "cannon-es": "^0.20.0",
     "lucide-react": "^0.511.0",
+    "qrcode-generator": "^2.0.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "three": ">=0.170.0 <0.200.0"

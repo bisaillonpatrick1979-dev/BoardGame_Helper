@@ -1,0 +1,700 @@
+/* ---------- Jouer ensemble (parties en réseau) ---------- */
+.online {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: 8px;
+  gap: 12px;
+}
+
+.onHero {
+  text-align: center;
+  padding: 16px 14px;
+  border-radius: 24px;
+  background: radial-gradient(circle at 80% 0%, color-mix(in srgb, var(--secondary) 55%, transparent), transparent 60%),
+    linear-gradient(160deg, color-mix(in srgb, var(--primary) 45%, transparent), rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--border);
+}
+
+.onPhones {
+  font-size: 34px;
+  letter-spacing: -6px;
+  margin-bottom: 6px;
+  filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.4));
+}
+
+.onHero h2 {
+  font-size: 20px;
+  line-height: 1.2;
+  margin-bottom: 6px;
+}
+
+.onHero p {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.onNotice {
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--bad) 18%, transparent);
+  border: 1px solid color-mix(in srgb, var(--bad) 50%, transparent);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.onField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-weight: 800;
+  font-size: 14px;
+}
+
+.onField input,
+.onCodeInput {
+  width: 100%;
+  min-width: 0;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--text);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.onCodeInput {
+  text-transform: uppercase;
+  letter-spacing: 0.25em;
+  text-align: center;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.onCard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  flex: none;
+}
+
+.onCard.highlight {
+  border-color: color-mix(in srgb, var(--accent) 60%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.onCardTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 800;
+}
+
+.onJoinRow {
+  display: flex;
+  gap: 8px;
+}
+
+.onJoinRow .bigAction {
+  flex: none;
+}
+
+.onCreate {
+  flex: none;
+  min-height: 58px;
+  font-size: 18px;
+}
+
+.onResume {
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px dashed var(--border);
+  color: var(--text);
+  font-weight: 700;
+  flex: none;
+}
+
+.onConnecting,
+.onWaitHost {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px;
+  color: var(--muted);
+  font-weight: 700;
+  text-align: center;
+  flex: none;
+}
+
+.onPulse {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--good);
+  animation: onPulse 1.4s ease-in-out infinite;
+  flex: none;
+}
+
+@keyframes onPulse {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--good) 60%, transparent); }
+  50% { box-shadow: 0 0 0 8px transparent; }
+}
+
+/* Code de la partie */
+.onCode {
+  display: block;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 34px;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  color: var(--accent);
+  line-height: 1.1;
+  padding: 0;
+  background: none;
+  border: 0;
+}
+
+.onCode.small {
+  display: inline;
+  font-size: 18px;
+}
+
+.onInviteTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.onInviteTop small {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.onQrBtn.active {
+  background: var(--accent);
+  color: #111;
+}
+
+.onQr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.qrCode {
+  border-radius: 14px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+}
+
+.onShareRow {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.onShare {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 4px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.onShare:active {
+  transform: scale(0.96);
+}
+
+.onSectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 800;
+  flex: none;
+}
+
+.onMembers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex: none;
+}
+
+.onMember {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px 6px 10px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.onMember.away {
+  opacity: 0.5;
+}
+
+.onMember small {
+  color: var(--muted);
+}
+
+.onDot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--good);
+  box-shadow: 0 0 8px var(--good);
+}
+
+.onMember.away .onDot {
+  background: var(--muted);
+  box-shadow: none;
+}
+
+.onCrown {
+  color: var(--accent);
+}
+
+.iconButton.small {
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+}
+
+.onGames {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  flex: none;
+}
+
+.onGame {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 10px;
+  border-radius: 16px;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  color: var(--text);
+  text-align: left;
+}
+
+.onGame.active {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.onGameEmoji {
+  font-size: 24px;
+}
+
+.onGame small {
+  color: var(--muted);
+  font-size: 11.5px;
+  line-height: 1.25;
+}
+
+.onOpts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+}
+
+.onOpts .optionRow {
+  width: 100%;
+}
+
+.onStartBtn {
+  flex: none;
+  min-height: 56px;
+}
+
+/* Barre de la salle (en haut pendant une partie) */
+.onRoom {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.onBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  min-height: 34px;
+}
+
+.onBarCode {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.onBarCount {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--good);
+  font-weight: 800;
+  font-size: 14px;
+}
+
+.onBarWarn {
+  color: var(--bad);
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.onBarSpacer {
+  flex: 1;
+}
+
+/* ---------- Cartes libres ---------- */
+.nc-others {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  flex: none;
+  padding-bottom: 2px;
+}
+
+.nc-other {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 70px;
+  padding: 6px 8px;
+  border-radius: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.nc-other.away {
+  opacity: 0.5;
+}
+
+.nc-other strong {
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nc-reveal {
+  display: flex;
+}
+
+.nc-reveal .pcard + .pcard {
+  margin-left: -12px;
+}
+
+.nc-felt {
+  flex: 1;
+  min-height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 24px;
+  background: radial-gradient(ellipse at center, color-mix(in srgb, var(--felt) 100%, #fff 8%), var(--felt));
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.45);
+  border: 6px solid rgba(60, 35, 15, 0.8);
+}
+
+.nc-deck,
+.nc-table {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.nc-table {
+  position: relative;
+  min-width: 120px;
+}
+
+.nc-pile {
+  position: relative;
+  width: 62px;
+  height: 88px;
+}
+
+.nc-pileCard {
+  position: absolute;
+  inset: 0;
+  transition: transform 0.25s;
+  animation: ncLand 0.3s ease-out both;
+}
+
+@keyframes ncLand {
+  from { opacity: 0; translate: 0 40px; scale: 1.15; }
+}
+
+.nc-empty {
+  width: 62px;
+  height: 88px;
+  border-radius: 8px;
+  border: 2px dashed rgba(255, 255, 255, 0.3);
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+}
+
+.nc-take {
+  padding: 4px 10px;
+}
+
+.nc-log {
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+  flex: none;
+}
+
+.nc-log b {
+  color: var(--text);
+}
+
+.nc-hand {
+  display: flex;
+  align-items: flex-end;
+  justify-content: safe center;
+  overflow-x: auto;
+  padding: 18px 10px 4px;
+  min-height: 112px;
+  flex: none;
+}
+
+.nc-handCard {
+  flex: none;
+  transition: transform 0.18s;
+  position: relative;
+}
+
+.nc-handCard.up {
+  transform: translateY(-16px);
+}
+
+.nc-emptyHand {
+  align-self: center;
+}
+
+.nc-actions,
+.nc-menu {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex: none;
+}
+
+.nc-actions .bigAction {
+  flex: 1;
+}
+
+.nc-menu > span {
+  font-weight: 800;
+  font-size: 14px;
+}
+
+/* ---------- Dés partagés ---------- */
+.nd-latest {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 24px;
+  background: radial-gradient(ellipse at center, color-mix(in srgb, var(--felt) 100%, #fff 8%), var(--felt));
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.45);
+  flex: none;
+  min-height: 170px;
+  justify-content: center;
+  text-align: center;
+}
+
+.nd-who {
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.nd-who strong {
+  font-size: 18px;
+  color: #fff;
+}
+
+.nd-faces {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.nd-faces > * {
+  animation: ndTumble 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+.nd-faces > *:nth-child(2) { animation-delay: 0.05s; }
+.nd-faces > *:nth-child(3) { animation-delay: 0.1s; }
+.nd-faces > *:nth-child(4) { animation-delay: 0.15s; }
+
+@keyframes ndTumble {
+  from { transform: translateY(-30px) rotate(-200deg) scale(0.4); opacity: 0; }
+}
+
+.nd-poly {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #fff7ed, #e7d9c4);
+  color: #1f2937;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.35);
+  line-height: 1;
+}
+
+.nd-poly b {
+  font-size: 20px;
+}
+
+.nd-poly small {
+  font-size: 9px;
+  opacity: 0.6;
+}
+
+.nd-poly.d4 { clip-path: polygon(50% 0, 100% 100%, 0 100%); border-radius: 0; padding-top: 14px; }
+.nd-poly.d8 { clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); border-radius: 0; }
+.nd-poly.d10 { clip-path: polygon(50% 0, 100% 40%, 50% 100%, 0 40%); border-radius: 0; }
+.nd-poly.d12 { clip-path: polygon(50% 0, 98% 35%, 80% 95%, 20% 95%, 2% 35%); border-radius: 0; }
+.nd-poly.d20 { clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); border-radius: 0; background: linear-gradient(145deg, #c7d2fe, #818cf8); }
+.nd-poly.d100 { border-radius: 50%; background: linear-gradient(145deg, #fde68a, #f59e0b); }
+
+.nd-total {
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.nd-total b {
+  font-size: 30px;
+  color: var(--accent);
+  margin-left: 6px;
+}
+
+.nd-history {
+  flex: 1;
+  min-height: 60px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.nd-row {
+  display: grid;
+  grid-template-columns: 1fr auto 44px;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 12px;
+  background: var(--surface);
+  font-size: 14px;
+}
+
+.nd-row span {
+  color: var(--muted);
+}
+
+.nd-row b {
+  text-align: right;
+  color: var(--accent);
+}
+
+.nd-builder {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: none;
+}
+
+.nd-pool {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 32px;
+  align-items: center;
+}
+
+.nd-add {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.nd-addBtn {
+  padding: 8px 0;
+  border-radius: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-weight: 800;
+  font-size: 12px;
+}
+
+.nd-bottom {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.nd-bottom .bigAction {
+  flex: 1;
+}
+
+/* Poker en réseau : un peu plus de place pour 8 joueurs */
+.netPoker .pokerSeat .seatName {
+  max-width: 76px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
