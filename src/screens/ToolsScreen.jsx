@@ -2,6 +2,12 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight, Minus, Pause, Play, Plus, RotateCcw, Trash2, UserPlus, X } from "lucide-react";
 import { randomInt, sfx, useLang, useStored, vibrate } from "../lib/core.js";
+import Hourglass from "../tools/Hourglass.jsx";
+import Counters from "../tools/Counters.jsx";
+import CustomDice from "../tools/CustomDice.jsx";
+import TurnOrder from "../tools/TurnOrder.jsx";
+import LetterTiles from "../tools/LetterTiles.jsx";
+import PropertyKit from "../tools/PropertyKit.jsx";
 
 // ---------- Scores ----------
 function Scores({ players, setPlayers }) {
@@ -362,27 +368,47 @@ function Wheel({ players }) {
   );
 }
 
+// ---------- Liste des pièces de rechange ----------
+export const TOOLS = [
+  { id: "scores", emoji: "🏆", fr: "Scores", en: "Scores", descFr: "Feuille de pointage", descEn: "Score sheet", colors: ["#ca8a04", "#b45309"] },
+  { id: "counters", emoji: "🔢", fr: "Compteurs", en: "Counters", descFr: "Vies, armées, ressources", descEn: "Life, armies, resources", colors: ["#dc2626", "#9d174d"] },
+  { id: "hourglass", emoji: "⏳", fr: "Sablier", en: "Hourglass", descFr: "30 s à 5 min, se retourne", descEn: "30 s to 5 min, flips", colors: ["#d97706", "#92400e"] },
+  { id: "timer", emoji: "⏱️", fr: "Minuteur", en: "Timer", descFr: "Chrono avec alarme", descEn: "Timer with alarm", colors: ["#0891b2", "#1e40af"] },
+  { id: "bank", emoji: "💰", fr: "Banque", en: "Bank", descFr: "Argent du jeu", descEn: "Play money", colors: ["#15803d", "#065f46"] },
+  { id: "property", emoji: "🏠", fr: "Kit immobilier", en: "Property kit", descFr: "Cartes événement et titres", descEn: "Event cards & deeds", colors: ["#ea580c", "#b91c1c"] },
+  { id: "customdice", emoji: "🎨", fr: "Dés spéciaux", en: "Special dice", descFr: "Couleurs, lettres, sur mesure", descEn: "Colors, letters, custom", colors: ["#7c3aed", "#4338ca"] },
+  { id: "letters", emoji: "🔤", fr: "Lettres", en: "Letter tiles", descFr: "Sac de tuiles pour jeux de mots", descEn: "Tile bag for word games", colors: ["#a16207", "#78350f"] },
+  { id: "turns", emoji: "🔄", fr: "Ordre de jeu", en: "Turn order", descFr: "Qui commence, à qui le tour", descEn: "Who starts, whose turn", colors: ["#0d9488", "#0f766e"] },
+  { id: "wheel", emoji: "🎡", fr: "Roue", en: "Wheel", descFr: "Tirage au sort", descEn: "Random pick", colors: ["#db2777", "#7c3aed"] }
+];
+
 export default function ToolsScreen({ tool, onTool, players, setPlayers }) {
-  const { t } = useLang();
-  const tools = [
-    ["scores", t("Scores", "Scores")],
-    ["timer", t("Minuteur", "Timer")],
-    ["bank", t("Banque", "Bank")],
-    ["wheel", t("Roue", "Wheel")]
-  ];
-  return (
-    <div className="toolsScreen">
-      <div className="segmented">
-        {tools.map(([id, label]) => (
-          <button key={id} className={tool === id ? "active" : ""} onClick={() => onTool(id)}>
-            {label}
+  const { lang } = useLang();
+  if (!tool) {
+    return (
+      <div className="gamesGrid toolsGrid">
+        {TOOLS.map((item) => (
+          <button key={item.id} className="gameTile" style={{ "--g1": item.colors[0], "--g2": item.colors[1] }} onClick={() => onTool(item.id)}>
+            <span className="gameEmoji">{item.emoji}</span>
+            <strong>{item[lang]}</strong>
+            <small>{lang === "fr" ? item.descFr : item.descEn}</small>
           </button>
         ))}
       </div>
+    );
+  }
+  return (
+    <div className="toolsScreen">
       {tool === "scores" && <Scores players={players} setPlayers={setPlayers} />}
       {tool === "timer" && <TimerTool />}
       {tool === "bank" && <Bank players={players} setPlayers={setPlayers} />}
       {tool === "wheel" && <Wheel players={players} />}
+      {tool === "hourglass" && <Hourglass />}
+      {tool === "counters" && <Counters players={players} />}
+      {tool === "customdice" && <CustomDice />}
+      {tool === "turns" && <TurnOrder players={players} />}
+      {tool === "letters" && <LetterTiles />}
+      {tool === "property" && <PropertyKit players={players} setPlayers={setPlayers} />}
     </div>
   );
 }

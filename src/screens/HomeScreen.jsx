@@ -1,5 +1,5 @@
 // Écran d'accueil : accès rapide à tout, sans défilement
-import { Dice5, Gamepad2, Spade, Timer, Trophy, Wallet } from "lucide-react";
+import { Dice5, Gamepad2, Puzzle, Spade } from "lucide-react";
 import { useLang } from "../lib/core.js";
 import { GAMES } from "./GamesScreen.jsx";
 import PlayingCard from "../cards/PlayingCard.jsx";
@@ -12,7 +12,7 @@ const HERO_CARDS = [
 
 export default function HomeScreen({ onTab, onGame, onTool }) {
   const { t, lang } = useLang();
-  const featured = GAMES.slice(0, 6);
+  const featured = GAMES.slice(0, 4);
 
   return (
     <div className="home">
@@ -23,11 +23,18 @@ export default function HomeScreen({ onTab, onGame, onTool }) {
           ))}
         </div>
         <div className="heroText">
-          <h2>{t("Il te manque des pièces?", "Missing pieces?")}</h2>
-          <p>{t("Dés, cartes, scores et jeux — tout est ici, même sans Internet.", "Dice, cards, scores and games — all here, even offline.")}</p>
+          <h2>{t("Ta trousse de secours pour soirées de jeux", "Your game-night rescue kit")}</h2>
+          <p>{t("Dés, cartes, sablier, compteurs, argent, titres… L'app remplace ce qui manque à ton jeu, même sans Internet.", "Dice, cards, hourglass, counters, money, deeds… The app replaces what your game is missing, even offline.")}</p>
         </div>
       </section>
 
+      <div className="homeSectionTitle">
+        <Puzzle size={18} />
+        <span>{t("Il te manque une pièce?", "Missing a piece?")}</span>
+        <button className="linkButton" onClick={() => onTab("tools")}>
+          {t("Tout voir", "See all")}
+        </button>
+      </div>
       <div className="homeTiles">
         <button className="homeTile tileDice" onClick={() => onTab("dice")}>
           <Dice5 size={30} />
@@ -39,18 +46,19 @@ export default function HomeScreen({ onTab, onGame, onTool }) {
           <strong>{t("Cartes", "Cards")}</strong>
           <small>{t("Piger, distribuer", "Draw, deal")}</small>
         </button>
-        <button className="homeTile tileScores" onClick={() => onTool("scores")}>
-          <Trophy size={26} />
-          <strong>{t("Scores", "Scores")}</strong>
-        </button>
-        <button className="homeTile tileTimer" onClick={() => onTool("timer")}>
-          <Timer size={26} />
-          <strong>{t("Minuteur", "Timer")}</strong>
-        </button>
-        <button className="homeTile tileBank" onClick={() => onTool("bank")}>
-          <Wallet size={26} />
-          <strong>{t("Banque", "Bank")}</strong>
-        </button>
+        {[
+          ["hourglass", "⏳", t("Sablier", "Hourglass")],
+          ["counters", "🔢", t("Compteurs", "Counters")],
+          ["property", "🏠", t("Kit immo", "Property kit")],
+          ["bank", "💰", t("Banque", "Bank")],
+          ["customdice", "🎨", t("Dés spéciaux", "Special dice")],
+          ["scores", "🏆", t("Scores", "Scores")]
+        ].map(([id, emoji, label]) => (
+          <button key={id} className="homeTile small" onClick={() => onTool(id)}>
+            <span className="tileEmoji">{emoji}</span>
+            <strong>{label}</strong>
+          </button>
+        ))}
       </div>
 
       <div className="homeSectionTitle">

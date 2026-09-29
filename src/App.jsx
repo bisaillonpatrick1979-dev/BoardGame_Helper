@@ -1,12 +1,12 @@
 // Board Game Helper — coquille de l'application : en-tête, écrans, barre d'onglets
 import { useEffect, useState } from "react";
-import { ChevronLeft, Dice5, Gamepad2, Home, Settings, Spade, Trophy, UserRound } from "lucide-react";
+import { ChevronLeft, Dice5, Gamepad2, Home, Puzzle, Settings, Spade, UserRound } from "lucide-react";
 import { LangContext, setSoundEnabled, useStored } from "./lib/core.js";
 import HomeScreen from "./screens/HomeScreen.jsx";
 import DiceScreen from "./screens/DiceScreen.jsx";
 import CardsScreen from "./screens/CardsScreen.jsx";
 import GamesScreen, { GAMES } from "./screens/GamesScreen.jsx";
-import ToolsScreen from "./screens/ToolsScreen.jsx";
+import ToolsScreen, { TOOLS } from "./screens/ToolsScreen.jsx";
 import SettingsSheet, { THEMES } from "./screens/SettingsSheet.jsx";
 import AccountSheet from "./screens/AccountSheet.jsx";
 import { AuthProvider, useAuth } from "./lib/auth.jsx";
@@ -32,7 +32,7 @@ function AppShell() {
   const [sound, setSound] = useStored("bgh2_sound", true);
   const [players, setPlayers] = useStored("bgh2_players", DEFAULT_PLAYERS);
   const [tab, setTab] = useState("home");
-  const [tool, setTool] = useState("scores");
+  const [tool, setTool] = useState(null);
   const [game, setGame] = useState(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
@@ -58,7 +58,7 @@ function AppShell() {
     { id: "dice", label: t("Dés", "Dice"), icon: Dice5 },
     { id: "cards", label: t("Cartes", "Cards"), icon: Spade },
     { id: "games", label: t("Jeux", "Games"), icon: Gamepad2 },
-    { id: "tools", label: t("Outils", "Tools"), icon: Trophy }
+    { id: "tools", label: t("Pièces", "Pieces"), icon: Puzzle }
   ];
 
   const openGame = (id) => {
@@ -72,17 +72,21 @@ function AppShell() {
   };
 
   const currentGame = GAMES.find((g) => g.id === game);
+  const currentTool = TOOLS.find((x) => x.id === tool);
+  const inSub = (tab === "games" && currentGame) || (tab === "tools" && currentTool);
   const title =
     tab === "games" && currentGame
       ? currentGame.name[lang]
-      : { home: "Board Game Helper", dice: t("Dés", "Dice"), cards: t("Cartes", "Cards"), games: t("Jeux", "Games"), tools: t("Outils", "Tools") }[tab];
+      : tab === "tools" && currentTool
+        ? currentTool[lang]
+        : { home: "Board Game Helper", dice: t("Dés", "Dice"), cards: t("Cartes", "Cards"), games: t("Jeux", "Games"), tools: t("Pièces", "Pieces") }[tab];
 
   return (
     <LangContext.Provider value={lang}>
       <div className="app">
         <header className="topBar">
-          {tab === "games" && currentGame ? (
-            <button className="iconButton" onClick={() => setGame(null)} aria-label={t("Retour", "Back")}>
+          {inSub ? (
+            <button className="iconButton" onClick={() => (tab === "games" ? setGame(null) : setTool(null))} aria-label={t("Retour", "Back")}>
               <ChevronLeft size={24} />
             </button>
           ) : (
@@ -114,6 +118,7 @@ function AppShell() {
               className={tab === id ? "active" : ""}
               onClick={() => {
                 if (id === "games" && tab === "games") setGame(null);
+                if (id === "tools" && tab === "tools") setTool(null);
                 setTab(id);
               }}
             >

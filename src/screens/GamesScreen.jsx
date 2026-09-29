@@ -7,6 +7,7 @@ import Connect4 from "../games/Connect4.jsx";
 import TicTacToe from "../games/TicTacToe.jsx";
 import Memory from "../games/Memory.jsx";
 import HigherLower from "../games/HigherLower.jsx";
+import Poker from "../games/poker/Poker.jsx";
 
 export const GAMES = [
   {
@@ -32,6 +33,14 @@ export const GAMES = [
     desc: { fr: "Approche 21 sans dépasser", en: "Get close to 21 without busting" },
     colors: ["#15803d", "#0f766e"],
     component: Blackjack
+  },
+  {
+    id: "poker",
+    emoji: "♠️",
+    name: { fr: "Poker", en: "Poker" },
+    desc: { fr: "Texas Hold'em contre 1 à 5 adversaires", en: "Texas Hold'em vs 1 to 5 opponents" },
+    colors: ["#111827", "#b91c1c"],
+    component: Poker
   },
   {
     id: "connect4",
