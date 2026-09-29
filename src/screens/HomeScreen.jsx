@@ -2,31 +2,29 @@
 import { Dice5, Gamepad2, Puzzle, Spade } from "lucide-react";
 import { useLang } from "../lib/core.js";
 import { GAMES } from "./GamesScreen.jsx";
-import PlayingCard from "../cards/PlayingCard.jsx";
 import { PlayerChips } from "./PlayersSheet.jsx";
-
-const HERO_CARDS = [
-  { id: "h1", rank: "A", suit: "spades" },
-  { id: "h2", rank: "K", suit: "hearts" },
-  { id: "h3", rank: "Q", suit: "diamonds" }
-];
 
 export default function HomeScreen({ onTab, onGame, onTool, players, onPlayers }) {
   const { t, lang } = useLang();
-  const featured = GAMES.slice(0, 4);
+  // Les deux premiers jeux (Lia et le livre-jeu) sont déjà en vedette plus haut
+  const featured = GAMES.slice(2, 6);
 
   return (
     <div className="home">
-      <section className="homeHero">
-        <div className="heroCards" aria-hidden="true">
-          {HERO_CARDS.map((card, i) => (
-            <PlayingCard key={card.id} card={card} width={62} className={`heroCard heroCard${i}`} />
-          ))}
-        </div>
-        <div className="heroText">
-          <h2>{t("Ta trousse de secours pour soirées de jeux", "Your game-night rescue kit")}</h2>
-          <p>{t("Dés, cartes, sablier, compteurs, argent, titres… L'app remplace ce qui manque à ton jeu, même sans Internet.", "Dice, cards, hourglass, counters, money, deeds… The app replaces what your game is missing, even offline.")}</p>
-        </div>
+      {/* Les deux aventures en vedette : livre dont tu es le héros et jeu de rôle avec Lia (IA) */}
+      <section className="homeAdventures">
+        <button className="adventureCard advBook" onClick={() => onGame("gamebook")}>
+          <span className="advBadge">{t("Livre-jeu", "Gamebook")}</span>
+          <span className="advEmoji">🐦‍⬛</span>
+          <strong>{t("Livre dont tu es le héros", "Choose-your-path book")}</strong>
+          <small>{t("La Crypte du Roi-Corbeau · combats aux dés", "The Raven King's Crypt · dice combat")}</small>
+        </button>
+        <button className="adventureCard advLia" onClick={() => onGame("lia")}>
+          <span className="advBadge">{t("IA", "AI")}</span>
+          <span className="advEmoji">🐉</span>
+          <strong>{t("Donjons avec Lia", "Dungeons with Lia")}</strong>
+          <small>{t("Jeu de rôle, Lia est la maître du jeu", "Role-play, Lia is your game master")}</small>
+        </button>
       </section>
 
       <div className="homePlayers">

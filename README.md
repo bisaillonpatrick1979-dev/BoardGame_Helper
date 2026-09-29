@@ -4,7 +4,7 @@ Il te manque des dés, le sablier ou l'argent du jeu? Board Game Helper remplace
 
 ## Fonctionnalités
 
-L'app est organisée comme une vraie application mobile : en-tête, 5 onglets (Accueil, Dés, Cartes, Jeux, Pièces) et chaque écran tient dans la hauteur du téléphone.
+L'app est organisée comme une vraie application mobile : en-tête, 5 onglets (Accueil, Dés, Cartes, Jeux, Pièces) et chaque écran tient dans la hauteur du téléphone. Les deux aventures (livre dont tu es le héros et jeu de rôle avec Lia) sont en vedette tout en haut de l'accueil.
 
 - **Dés 3D réalistes** : D4 à D20 en vrais polyèdres avec physique, ombres et son. Touche ou glisse pour lancer, touche un dé pour le garder. 7 couleurs.
 - **Cartes réalistes** : jeu de 52 cartes dessiné en vectoriel (vraie disposition des enseignes, figures illustrées, dos décoré), retournement 3D.
@@ -24,10 +24,10 @@ L'app est organisée comme une vraie application mobile : en-tête, 5 onglets (A
   - Scores, minuteur, sablier animé (se retourne), compteurs (vies, armées, ressources…).
   - Banque avec transferts.
   - Kit immobilier : cartes événement « Surprise » et « Coffre » (texte original, modifiables pour recopier une carte perdue) et titres de propriété modifiables, avec propriétaire, maisons, hypothèque et paiement du loyer relié à la banque.
-  - Dés spéciaux (couleurs, lettres, oui/non, directions ou faces sur mesure) — aussi lançables en 3D dans l'écran Dés (bouton ✨), sac de tuiles de lettres, ordre de jeu (qui commence, à qui le tour), roue de hasard.
+  - Dés spéciaux (couleurs, lettres, oui/non, directions ou faces sur mesure) — aussi lançables en 3D dans l'écran Dés (bouton ✨), ordre de jeu (qui commence, à qui le tour).
 - **Réglages** : français/anglais, 8 thèmes, son.
 - **Comptes** (optionnels) : connexion par courriel, sauvegarde dans le nuage des scores, statistiques et réglages, récupération sur un autre appareil, suppression de compte, [politique de confidentialité](public/confidentialite.html).
-- **PWA hors ligne** : installable sur l'écran d'accueil, fonctionne sans connexion.
+- **PWA hors ligne** : installable sur l'écran d'accueil, fonctionne sans connexion. Se met à jour toute seule quand une nouvelle version est publiée (numéro de version visible dans les Réglages).
 
 ## Développement
 
@@ -46,7 +46,7 @@ Organisation du code :
 - `src/App.jsx` : coquille (en-tête, onglets, réglages).
 - `src/screens/` : écrans Accueil, Dés, Cartes, Jeux, Outils, Réglages.
 - `src/games/` : un fichier par jeu (`poker/engine.js` : moteur de poker testé sur plus de 1 000 mains simulées).
-- `src/tools/` : pièces de rechange (sablier, compteurs, dés spéciaux, lettres, ordre de jeu, kit immobilier).
+- `src/tools/` : pièces de rechange (sablier, compteurs, dés spéciaux, ordre de jeu, kit immobilier).
 - `src/cards/` : cartes à jouer SVG et paquet.
 - `src/lib/core.js` : langue, stockage, statistiques, sons, hasard.
 - `src/lib/cloud.js` et `src/lib/auth.jsx` : comptes Supabase et synchronisation (la version la plus récente de chaque donnée gagne).

@@ -1,12 +1,11 @@
-// Outils de partie : scores, minuteur, banque et roue de hasard
+// Outils de partie : scores, minuteur, banque et liste des pièces de rechange
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight, Minus, Pause, Play, Plus, RotateCcw, Trash2, UserPlus, X } from "lucide-react";
-import { randomInt, sfx, useLang, useStored, vibrate } from "../lib/core.js";
+import { ArrowRight, Minus, Pause, Play, Plus, RotateCcw, UserPlus, X } from "lucide-react";
+import { sfx, useLang, useStored, vibrate } from "../lib/core.js";
 import Hourglass from "../tools/Hourglass.jsx";
 import Counters from "../tools/Counters.jsx";
 import CustomDice from "../tools/CustomDice.jsx";
 import TurnOrder from "../tools/TurnOrder.jsx";
-import LetterTiles from "../tools/LetterTiles.jsx";
 import PropertyKit from "../tools/PropertyKit.jsx";
 
 // ---------- Scores ----------
@@ -255,119 +254,6 @@ function Bank({ players, setPlayers }) {
   );
 }
 
-// ---------- Roue ----------
-const WHEEL_COLORS = ["#ef4444", "#f97316", "#eab308", "#22c55e", "#06b6d4", "#3b82f6", "#8b5cf6", "#ec4899"];
-
-function Wheel({ players }) {
-  const { t } = useLang();
-  const [items, setItems] = useStored("bgh2_wheel", () => players.map((p) => p.name));
-  const [rotation, setRotation] = useState(0);
-  const [spinning, setSpinning] = useState(false);
-  const [result, setResult] = useState(null);
-  const [editing, setEditing] = useState(false);
-  const [input, setInput] = useState("");
-  const n = Math.max(items.length, 1);
-  const seg = 360 / n;
-
-  function spin() {
-    if (spinning || items.length < 2) return;
-    const pick = randomInt(items.length);
-    // Le haut de la roue (aiguille) doit arriver au centre du segment choisi
-    const target = 360 - (pick * seg + seg / 2);
-    const base = rotation - (rotation % 360);
-    setRotation(base + 360 * 6 + target);
-    setSpinning(true);
-    setResult(null);
-    sfx.tap();
-    setTimeout(() => {
-      setSpinning(false);
-      setResult(items[pick]);
-      sfx.win();
-      vibrate([60, 40, 120]);
-    }, 5200);
-  }
-
-  const polar = (angle, radius) => {
-    const a = ((angle - 90) * Math.PI) / 180;
-    return [150 + radius * Math.cos(a), 150 + radius * Math.sin(a)];
-  };
-
-  return (
-    <div className="tool wheelTool">
-      <div className="wheelWrap">
-        <div className="wheelPointer" />
-        <svg viewBox="0 0 300 300" className="wheelSvg" style={{ transform: `rotate(${rotation}deg)`, transition: spinning ? "transform 5.2s cubic-bezier(0.12, 0.8, 0.1, 1)" : "none" }}>
-          {items.map((item, i) => {
-            const [x1, y1] = polar(i * seg, 140);
-            const [x2, y2] = polar((i + 1) * seg, 140);
-            const large = seg > 180 ? 1 : 0;
-            const [tx, ty] = polar(i * seg + seg / 2, 92);
-            return (
-              <g key={`${item}-${i}`}>
-                <path d={`M150 150 L${x1} ${y1} A140 140 0 ${large} 1 ${x2} ${y2} Z`} fill={WHEEL_COLORS[i % WHEEL_COLORS.length]} stroke="rgba(255,255,255,0.6)" strokeWidth="2" />
-                <text x={tx} y={ty} fill="#fff" fontSize={n > 8 ? 11 : 14} fontWeight="800" textAnchor="middle" dominantBaseline="middle" transform={`rotate(${i * seg + seg / 2} ${tx} ${ty})`}>
-                  {item.length > 12 ? `${item.slice(0, 11)}…` : item}
-                </text>
-              </g>
-            );
-          })}
-          <circle cx="150" cy="150" r="140" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="6" />
-          <circle cx="150" cy="150" r="24" fill="#111827" stroke="#facc15" strokeWidth="4" />
-        </svg>
-      </div>
-      <div className="wheelResult">{result ? `🎉 ${result}` : spinning ? "…" : " "}</div>
-      <div className="actionRow">
-        <button className="bigAction secondary" onClick={() => setEditing(true)}>
-          {t("Options", "Options")} ({items.length})
-        </button>
-        <button className="bigAction" onClick={spin} disabled={spinning || items.length < 2}>
-          {t("Tourner", "Spin")}
-        </button>
-      </div>
-
-      {editing && (
-        <div className="sheetBackdrop" onClick={() => setEditing(false)}>
-          <div className="sheet" onClick={(e) => e.stopPropagation()}>
-            <div className="sheetHeader">
-              <h2>{t("Options de la roue", "Wheel options")}</h2>
-              <button className="iconButton" onClick={() => setEditing(false)}>
-                <X size={22} />
-              </button>
-            </div>
-            <form
-              className="addRow"
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (!input.trim()) return;
-                setItems([...items, input.trim()]);
-                setInput("");
-              }}
-            >
-              <input value={input} onChange={(e) => setInput(e.target.value)} placeholder={t("Ajouter une option", "Add an option")} />
-              <button className="iconButton accentBg" type="submit">
-                <Plus size={20} />
-              </button>
-            </form>
-            <div className="editList">
-              {items.map((item, i) => (
-                <div className="editRow" key={`${item}-${i}`}>
-                  <span>{item}</span>
-                  <button className="iconButton soft" onClick={() => setItems(items.filter((_, j) => j !== i))}>
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              ))}
-            </div>
-            <button className="linkButton" onClick={() => setItems(players.map((p) => p.name))}>
-              {t("Utiliser les noms des joueurs", "Use player names")}
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
 // ---------- Liste des pièces de rechange ----------
 export const TOOLS = [
   { id: "scores", emoji: "🏆", fr: "Scores", en: "Scores", descFr: "Feuille de pointage", descEn: "Score sheet", colors: ["#ca8a04", "#b45309"] },
@@ -377,9 +263,7 @@ export const TOOLS = [
   { id: "bank", emoji: "💰", fr: "Banque", en: "Bank", descFr: "Argent du jeu", descEn: "Play money", colors: ["#15803d", "#065f46"] },
   { id: "property", emoji: "🏠", fr: "Kit immobilier", en: "Property kit", descFr: "Cartes événement et titres", descEn: "Event cards & deeds", colors: ["#ea580c", "#b91c1c"] },
   { id: "customdice", emoji: "🎨", fr: "Dés spéciaux", en: "Special dice", descFr: "Couleurs, lettres, sur mesure", descEn: "Colors, letters, custom", colors: ["#7c3aed", "#4338ca"] },
-  { id: "letters", emoji: "🔤", fr: "Lettres", en: "Letter tiles", descFr: "Sac de tuiles pour jeux de mots", descEn: "Tile bag for word games", colors: ["#a16207", "#78350f"] },
-  { id: "turns", emoji: "🔄", fr: "Ordre de jeu", en: "Turn order", descFr: "Qui commence, à qui le tour", descEn: "Who starts, whose turn", colors: ["#0d9488", "#0f766e"] },
-  { id: "wheel", emoji: "🎡", fr: "Roue", en: "Wheel", descFr: "Tirage au sort", descEn: "Random pick", colors: ["#db2777", "#7c3aed"] }
+  { id: "turns", emoji: "🔄", fr: "Ordre de jeu", en: "Turn order", descFr: "Qui commence, à qui le tour", descEn: "Who starts, whose turn", colors: ["#0d9488", "#0f766e"] }
 ];
 
 export default function ToolsScreen({ tool, onTool, players, setPlayers }) {
@@ -402,12 +286,10 @@ export default function ToolsScreen({ tool, onTool, players, setPlayers }) {
       {tool === "scores" && <Scores players={players} setPlayers={setPlayers} />}
       {tool === "timer" && <TimerTool />}
       {tool === "bank" && <Bank players={players} setPlayers={setPlayers} />}
-      {tool === "wheel" && <Wheel players={players} />}
       {tool === "hourglass" && <Hourglass />}
       {tool === "counters" && <Counters players={players} />}
       {tool === "customdice" && <CustomDice />}
       {tool === "turns" && <TurnOrder players={players} />}
-      {tool === "letters" && <LetterTiles />}
       {tool === "property" && <PropertyKit players={players} setPlayers={setPlayers} />}
     </div>
   );
