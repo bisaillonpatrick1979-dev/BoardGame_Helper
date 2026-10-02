@@ -7,13 +7,23 @@ import { DealtCard, DeckPile } from "../screens/CardsScreen.jsx";
 
 export default function HigherLower() {
   const { t, lang } = useLang();
-  const [initial] = useState(() => shuffledDeck());
-  const [deck, setDeck] = useState(() => initial.slice(1));
-  const [current, setCurrent] = useState(() => initial[0]);
-  const [streak, setStreak] = useState(0);
+  const [initial] = useStored("bgh2_save_higherlower_initial", () =>
+    shuffledDeck(),
+  );
+  const [deck, setDeck] = useStored("bgh2_save_higherlower_deck", () =>
+    initial.slice(1),
+  );
+  const [current, setCurrent] = useStored(
+    "bgh2_save_higherlower_current",
+    () => initial[0],
+  );
+  const [streak, setStreak] = useStored("bgh2_save_higherlower_streak", 0);
   const [best, setBest] = useStored("bgh2_hl_best", 0);
-  const [state, setState] = useState("idle"); // idle | ok | tie | lost
-  const [previous, setPrevious] = useState(null);
+  const [state, setState] = useStored("bgh2_save_higherlower_state", "idle"); // idle | ok | tie | lost
+  const [previous, setPrevious] = useStored(
+    "bgh2_save_higherlower_previous",
+    null,
+  );
 
   function guess(dir) {
     if (state === "lost") return;
@@ -58,24 +68,43 @@ export default function HigherLower() {
     idle: t("La prochaine carte sera…", "The next card will be…"),
     ok: t("Oui! Continue…", "Yes! Keep going…"),
     tie: t("Égalité — on continue", "Same value — keep going"),
-    lost: t("Raté!", "Missed!")
+    lost: t("Raté!", "Missed!"),
   }[state];
 
   return (
     <div className="game hilo">
       <div className="scoreStrip">
-        <span>🔥 {t("Série", "Streak")} · {streak}</span>
-        <span>🏆 {t("Record", "Best")} · {best}</span>
+        <span>
+          🔥 {t("Série", "Streak")} · {streak}
+        </span>
+        <span>
+          🏆 {t("Record", "Best")} · {best}
+        </span>
       </div>
 
       <div className="feltTable hiloTable">
         <div className="hiloRow">
           <DeckPile count={deck.length} width={70} />
           {current && <DealtCard key={current.id} card={current} width={150} />}
-          <div className="hiloPrev">{previous && <DealtCard key={`p-${previous.id}`} card={previous} width={60} className="dim" />}</div>
+          <div className="hiloPrev">
+            {previous && (
+              <DealtCard
+                key={`p-${previous.id}`}
+                card={previous}
+                width={60}
+                className="dim"
+              />
+            )}
+          </div>
         </div>
-        <div className="drawnName">{current ? cardName(current, lang) : ""}</div>
-        <div className={`gameStatus ${state === "lost" ? "done bad" : state === "ok" ? "done" : ""}`}>{message}</div>
+        <div className="drawnName">
+          {current ? cardName(current, lang) : ""}
+        </div>
+        <div
+          className={`gameStatus ${state === "lost" ? "done bad" : state === "ok" ? "done" : ""}`}
+        >
+          {message}
+        </div>
       </div>
 
       {state === "lost" ? (
