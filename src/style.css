@@ -4393,3 +4393,53 @@ button:disabled {
 .gamesGrid {
   grid-auto-rows: max-content;
 }
+
+/* Readable, scrollable layouts for the expanded game collection. */
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible {outline:3px solid var(--accent);outline-offset:3px;}
+.updateNotice {display:flex;align-items:center;gap:12px;padding:8px 12px;background:#253048;font-size:14px;flex:none;}
+.resumeGame {padding:10px;border:1px solid var(--accent);border-radius:12px;color:var(--accent);text-align:left;flex:none;}
+.home {overflow-y:auto;}
+.gameCatalog,.newGame {height:100%;min-height:0;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:14px;}
+.newGame > * {flex-shrink:0;}
+.newGame .newGame {height:auto;overflow:visible;padding:0;}
+.gameCatalog .gamesGrid {overflow:visible;height:auto;flex-shrink:0;}
+.gameSearch {width:100%;padding:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:12px;}
+.catalogFilters,.actionRow,.scoreStrip {display:flex;flex-wrap:wrap;gap:8px;}
+.catalogTile {position:relative;min-width:0;}
+.catalogTile .gameTile {width:100%;height:100%;padding-top:36px;min-height:170px;}
+.favoriteButton {position:absolute;right:6px;top:4px;width:44px;height:44px;font-size:28px;color:var(--accent);}
+.newGameHeader {display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.newGameHeader h2 {flex:1;font-size:20px;}
+.rulesPanel {padding:14px;border:1px solid var(--border);border-radius:12px;line-height:1.6;}
+.newGame label {display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.newGame select,.newGame input,.newGame textarea {background:#14213a;border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);}
+.newGame textarea {width:100%;min-height:100px;font:inherit;}
+.scoreStrip span {padding:8px;border-radius:8px;border:1px solid var(--border);}
+.selected {outline:3px solid var(--accent);outline-offset:-3px;}
+.diceButtons,.numberPad {display:flex;gap:8px;flex-wrap:wrap;}
+.diceButtons button,.numberPad button {min-width:44px;min-height:48px;border:1px solid var(--border);border-radius:10px;background:var(--surface-2);font-size:24px;padding:6px;}
+.sudokuBoard,.checkerBoard,.navalBoard {display:grid;width:min(100%,440px);align-self:center;aspect-ratio:1;}
+.sudokuBoard {grid-template-columns:repeat(9,1fr);}
+.sudokuBoard button {border:1px solid #68768b;min-width:0;background:#14213a;font-size:clamp(18px,5vw,28px);}
+.sudokuBoard .given {font-weight:800;background:#29354b;}
+.sudokuBoard .conflict {color:#ff9e9e;background:#572326;}
+.checkerBoard,.navalBoard {grid-template-columns:repeat(8,1fr);}
+.checkerBoard button {aspect-ratio:1;display:flex;align-items:center;justify-content:center;min-width:0;}
+.lightSquare {background:#b8b8b0;}.darkSquare {background:#334057;}.target {box-shadow:inset 0 0 0 4px #facc15;}
+.checkerPiece {border-radius:50%;width:80%;height:80%;display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 2px 5px #0008;}
+.checkerPiece.red {background:#be123c;color:white;}.checkerPiece.white {background:#f8fafc;color:#111827;}
+.navalBoard button,.navalBoard span {border:1px solid #52637b;aspect-ratio:1;background:#123b59;display:flex;align-items:center;justify-content:center;font-size:22px;}
+.navalBoard .hit {background:#982d3c;color:#fff;}.navalBoard .miss {background:#25364e;}.navalBoard .ship {background:#596c7f;}.ownFleet {max-width:280px;}
+.dominoChain {display:flex;gap:5px;overflow-x:auto;min-height:55px;align-items:center;padding:6px;}
+.dominoChain span {white-space:nowrap;border-radius:6px;padding:10px;background:#f5f0df;color:#14213a;}
+.cardHand {display:flex;flex-wrap:wrap;gap:8px;justify-content:center;}.cardHand button {border-radius:8px;padding:4px;}.cardCenter {display:flex;justify-content:center;align-items:center;gap:12px;}.cardCenter b {font-size:38px;}
+.privacyCover {padding:24px;display:flex;flex-direction:column;gap:16px;text-align:center;border:1px solid var(--accent);border-radius:16px;}
+.hugeNumber {font-size:64px;text-align:center;font-weight:800;}.wordReveal {padding:24px;font-size:28px;background:var(--surface-2);border-radius:16px;}
+.tableScroll {overflow-x:auto;}.newTable {width:100%;border-collapse:collapse;}.newTable th,.newTable td {padding:8px;text-align:center;border-bottom:1px solid var(--border);}.newTable td button {min-height:44px;min-width:44px;background:#284565;border-radius:8px;}
+.highContrast {--muted:#e2e8f0;--surface:#172134;--surface-2:#24334b;--border:#94a3b8;--text:#fff;}
+.largeText {font-size:19px;--top-h:66px;--nav-h:78px;}.largeText .muted,.largeText small,.largeText .sheetLabel {font-size:17px;}.largeText .bottomNav span {font-size:14px;}.largeText .home strong,.largeText .gameTile strong {font-size:19px;}.largeText .home {overflow-y:auto;}.largeText .homeAdventures,.largeText .homeTiles,.largeText .homeGames {flex-shrink:0;}.largeText .sheet {overflow-y:auto;}.largeText .cardHand button {transform:none;}.largeText .cardHand .pcard {min-width:78px;}.largeText .yamsSheet {overflow:auto;}.largeText .yamsSheet td,.largeText .yamsSheet th {font-size:18px;min-height:44px;}
+.reducedMotion *, .reducedMotion *::before,.reducedMotion *::after {animation:none!important;transition:none!important;scroll-behavior:auto!important;}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after {animation:none!important;transition:none!important;scroll-behavior:auto!important;}}
+@media(max-width:380px){.newGame{padding:8px;}.newGameHeader h2{font-size:18px;}.checkerPiece{font-size:20px;}.gameCatalog .gamesGrid{gap:8px;}.catalogTile .gameTile strong{font-size:16px;}}
+.liaNotebook {display:flex;flex-direction:column;gap:8px;padding:8px;flex:none;font-size:14px;}.liaNotebook textarea {width:100%;height:110px;resize:vertical;background:#172134;color:#fff;border:1px solid var(--border);border-radius:8px;padding:10px;font:inherit;}
+.largeText .homeTile strong {overflow-wrap:anywhere;min-width:0;}.largeText .homeTile.small {height:auto;min-height:96px;}.largeText .chipButton,.largeText .iconButton {min-height:44px;}.simpleDice {display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;min-height:150px;flex:none;padding:16px;background:var(--felt);border-radius:18px;}.simpleDice .diceButtons{justify-content:center;}.staticColor {display:inline-block;width:30px;height:30px;border:2px solid white;border-radius:5px;}
