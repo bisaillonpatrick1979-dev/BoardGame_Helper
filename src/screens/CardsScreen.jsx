@@ -1,12 +1,34 @@
 // Écran Cartes : piger, distribuer des mains privées, bataille et cartes personnalisées
 import { useEffect, useMemo, useState } from "react";
-import { Eye, EyeOff, Minus, Pencil, Plus, Shuffle, Trash2, X } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  Minus,
+  Pencil,
+  Plus,
+  Shuffle,
+  Trash2,
+  X,
+} from "lucide-react";
 import PlayingCard from "../cards/PlayingCard.jsx";
 import { battleValue, cardName, shuffledDeck } from "../cards/deck.js";
-import { randomInt, sfx, shuffle, useLang, useStored, vibrate } from "../lib/core.js";
+import {
+  randomInt,
+  sfx,
+  shuffle,
+  useLang,
+  useStored,
+  vibrate,
+} from "../lib/core.js";
 
 // Carte qui arrive de la pioche puis se retourne
-export function DealtCard({ card, width, delay = 0, className = "", faceUp = true }) {
+export function DealtCard({
+  card,
+  width,
+  delay = 0,
+  className = "",
+  faceUp = true,
+}) {
   const [shown, setShown] = useState(false);
   useEffect(() => {
     setShown(false);
@@ -14,7 +36,10 @@ export function DealtCard({ card, width, delay = 0, className = "", faceUp = tru
     return () => clearTimeout(timer);
   }, [card?.id, delay]);
   return (
-    <div className={`dealIn ${className}`} style={{ animationDelay: `${delay}ms` }}>
+    <div
+      className={`dealIn ${className}`}
+      style={{ animationDelay: `${delay}ms` }}
+    >
       <PlayingCard card={card} width={width} faceUp={faceUp && shown} />
     </div>
   );
@@ -24,10 +49,19 @@ export function DealtCard({ card, width, delay = 0, className = "", faceUp = tru
 export function DeckPile({ count, width = 76, onClick }) {
   const layers = Math.min(5, Math.ceil(count / 10));
   return (
-    <button className="deckPile" style={{ width }} onClick={onClick} disabled={!count}>
+    <button
+      className="deckPile"
+      style={{ width }}
+      onClick={onClick}
+      disabled={!count}
+    >
       {count === 0 && <div className="deckEmpty" style={{ width }} />}
       {Array.from({ length: layers }).map((_, i) => (
-        <div key={i} className="deckLayer" style={{ transform: `translate(${-i * 1.5}px, ${-i * 1.5}px)` }}>
+        <div
+          key={i}
+          className="deckLayer"
+          style={{ transform: `translate(${-i * 1.5}px, ${-i * 1.5}px)` }}
+        >
           <PlayingCard card={null} faceUp={false} width={width} />
         </div>
       ))}
@@ -38,10 +72,12 @@ export function DeckPile({ count, width = 76, onClick }) {
 
 function DrawMode() {
   const { t, lang } = useLang();
-  const [jokers, setJokers] = useState(false);
-  const [decks, setDecks] = useState(1);
-  const [deck, setDeck] = useState(() => shuffledDeck({ decks: 1, jokers: false }));
-  const [drawn, setDrawn] = useState([]);
+  const [jokers, setJokers] = useStored("bgh2_cards_drawmode_jokers", false);
+  const [decks, setDecks] = useStored("bgh2_cards_drawmode_decks", 1);
+  const [deck, setDeck] = useStored("bgh2_cards_drawmode_deck", () =>
+    shuffledDeck({ decks: 1, jokers: false }),
+  );
+  const [drawn, setDrawn] = useStored("bgh2_cards_drawmode_drawn", []);
 
   function reshuffle(nextDecks = decks, nextJokers = jokers) {
     setDeck(shuffledDeck({ decks: nextDecks, jokers: nextJokers }));
@@ -66,7 +102,13 @@ function DrawMode() {
         <div className="drawArea">
           <DeckPile count={deck.length} onClick={draw} />
           <div className="drawnSlot">
-            {last ? <DealtCard key={last.id} card={last} width={150} /> : <div className="emptySlot">{t("Touche la pioche", "Tap the deck")}</div>}
+            {last ? (
+              <DealtCard key={last.id} card={last} width={150} />
+            ) : (
+              <div className="emptySlot">
+                {t("Touche la pioche", "Tap the deck")}
+              </div>
+            )}
           </div>
         </div>
         <div className="drawnName">{last ? cardName(last, lang) : " "}</div>
@@ -88,23 +130,42 @@ function DrawMode() {
           Jokers {jokers ? "✓" : ""}
         </button>
         <div className="stepper small">
-          <button onClick={() => { const n = Math.max(1, decks - 1); setDecks(n); reshuffle(n, jokers); }}>
+          <button
+            onClick={() => {
+              const n = Math.max(1, decks - 1);
+              setDecks(n);
+              reshuffle(n, jokers);
+            }}
+          >
             <Minus size={16} />
           </button>
           <strong>
-            {decks} {t(decks > 1 ? "jeux" : "jeu", decks > 1 ? "decks" : "deck")}
+            {decks}{" "}
+            {t(decks > 1 ? "jeux" : "jeu", decks > 1 ? "decks" : "deck")}
           </strong>
-          <button onClick={() => { const n = Math.min(8, decks + 1); setDecks(n); reshuffle(n, jokers); }}>
+          <button
+            onClick={() => {
+              const n = Math.min(8, decks + 1);
+              setDecks(n);
+              reshuffle(n, jokers);
+            }}
+          >
             <Plus size={16} />
           </button>
         </div>
-        <button className="iconButton soft" onClick={() => reshuffle()} aria-label={t("Mélanger", "Shuffle")}>
+        <button
+          className="iconButton soft"
+          onClick={() => reshuffle()}
+          aria-label={t("Mélanger", "Shuffle")}
+        >
           <Shuffle size={20} />
         </button>
       </div>
 
       <button className="bigAction" onClick={draw} disabled={!deck.length}>
-        {deck.length ? t("Piger une carte", "Draw a card") : t("Pioche vide — mélange!", "Deck empty — shuffle!")}
+        {deck.length
+          ? t("Piger une carte", "Draw a card")
+          : t("Pioche vide — mélange!", "Deck empty — shuffle!")}
       </button>
     </div>
   );
@@ -118,15 +179,24 @@ export function Fan({ cards, faceUp, width = 70, selected, onSelect }) {
     <div className="fan" style={{ height: width * 1.4 + 40 }}>
       {cards.map((card, i) => {
         const angle = (i - (n - 1) / 2) * spread;
-        const shift = (i - (n - 1) / 2) * Math.min(width * 0.55, 260 / Math.max(n, 1));
+        const shift =
+          (i - (n - 1) / 2) * Math.min(width * 0.55, 260 / Math.max(n, 1));
         const lift = selected === card.id ? -18 : 0;
         return (
           <div
             key={card.id}
             className="fanCard"
-            style={{ transform: `translateX(${shift}px) translateY(${Math.abs(angle) * 1.2 + lift}px) rotate(${angle}deg)`, zIndex: i }}
+            style={{
+              transform: `translateX(${shift}px) translateY(${Math.abs(angle) * 1.2 + lift}px) rotate(${angle}deg)`,
+              zIndex: i,
+            }}
           >
-            <PlayingCard card={card} faceUp={faceUp} width={width} onClick={faceUp && onSelect ? () => onSelect(card.id) : undefined} />
+            <PlayingCard
+              card={card}
+              faceUp={faceUp}
+              width={width}
+              onClick={faceUp && onSelect ? () => onSelect(card.id) : undefined}
+            />
           </div>
         );
       })}
@@ -136,10 +206,19 @@ export function Fan({ cards, faceUp, width = 70, selected, onSelect }) {
 
 function HandsMode({ players }) {
   const { t } = useLang();
-  const seats = players.length >= 2 ? players.slice(0, 8) : [{ id: 1, name: "Joueur 1" }, { id: 2, name: "Joueur 2" }];
-  const [cardsEach, setCardsEach] = useState(5);
-  const [hands, setHands] = useState(null);
-  const [turn, setTurn] = useState(0);
+  const seats =
+    players.length >= 2
+      ? players.slice(0, 8)
+      : [
+          { id: 1, name: "Joueur 1" },
+          { id: 2, name: "Joueur 2" },
+        ];
+  const [cardsEach, setCardsEach] = useStored(
+    "bgh2_cards_handsmode_cardsEach",
+    5,
+  );
+  const [hands, setHands] = useStored("bgh2_cards_handsmode_hands", null);
+  const [turn, setTurn] = useStored("bgh2_cards_handsmode_turn", 0);
   const [visible, setVisible] = useState(false);
   const [selected, setSelected] = useState(null);
 
@@ -167,13 +246,27 @@ function HandsMode({ players }) {
     <div className="cardsMode">
       <div className="feltTable handTable">
         {!hands ? (
-          <div className="emptySlot">{t("Choisis le nombre de cartes puis distribue.", "Pick how many cards, then deal.")}</div>
+          <div className="emptySlot">
+            {t(
+              "Choisis le nombre de cartes puis distribue.",
+              "Pick how many cards, then deal.",
+            )}
+          </div>
         ) : (
           <>
             <div className="turnBanner">
-              {visible ? t("Main de", "Hand of") : t("Passe le téléphone à", "Pass the phone to")} <strong>{player.name}</strong>
+              {visible
+                ? t("Main de", "Hand of")
+                : t("Passe le téléphone à", "Pass the phone to")}{" "}
+              <strong>{player.name}</strong>
             </div>
-            <Fan cards={hand} faceUp={visible} width={hand.length > 7 ? 58 : 74} selected={selected} onSelect={(id) => setSelected(selected === id ? null : id)} />
+            <Fan
+              cards={hand}
+              faceUp={visible}
+              width={hand.length > 7 ? 58 : 74}
+              selected={selected}
+              onSelect={(id) => setSelected(selected === id ? null : id)}
+            />
           </>
         )}
       </div>
@@ -204,7 +297,13 @@ function HandsMode({ players }) {
             <Minus size={16} />
           </button>
           <strong>{cardsEach}</strong>
-          <button onClick={() => setCardsEach(Math.min(Math.floor(52 / seats.length), cardsEach + 1))}>
+          <button
+            onClick={() =>
+              setCardsEach(
+                Math.min(Math.floor(52 / seats.length), cardsEach + 1),
+              )
+            }
+          >
             <Plus size={16} />
           </button>
         </div>
@@ -222,10 +321,18 @@ function HandsMode({ players }) {
 
 function BattleMode({ players }) {
   const { t } = useLang();
-  const seats = players.length >= 2 ? players.slice(0, 6) : [{ id: 1, name: "Joueur 1" }, { id: 2, name: "Joueur 2" }];
-  const [deck, setDeck] = useState(() => shuffledDeck());
-  const [round, setRound] = useState(null);
-  const [wins, setWins] = useState({});
+  const seats =
+    players.length >= 2
+      ? players.slice(0, 6)
+      : [
+          { id: 1, name: "Joueur 1" },
+          { id: 2, name: "Joueur 2" },
+        ];
+  const [deck, setDeck] = useStored("bgh2_cards_battlemode_deck", () =>
+    shuffledDeck(),
+  );
+  const [round, setRound] = useStored("bgh2_cards_battlemode_round", null);
+  const [wins, setWins] = useStored("bgh2_cards_battlemode_wins", {});
 
   function play() {
     let pool = deck;
@@ -236,7 +343,10 @@ function BattleMode({ players }) {
     const winners = seats.filter((_, i) => battleValue(cards[i]) === best);
     setRound({ id: Date.now(), cards, winners: winners.map((w) => w.id) });
     if (winners.length === 1) {
-      setWins((old) => ({ ...old, [winners[0].id]: (old[winners[0].id] || 0) + 1 }));
+      setWins((old) => ({
+        ...old,
+        [winners[0].id]: (old[winners[0].id] || 0) + 1,
+      }));
       setTimeout(sfx.good, 500);
     } else {
       setTimeout(sfx.bad, 500);
@@ -251,19 +361,35 @@ function BattleMode({ players }) {
       <div className="feltTable battleTable">
         <div className={`battleSeats seats${seats.length}`}>
           {seats.map((p, i) => (
-            <div key={p.id} className={`battleSeat ${round?.winners.includes(p.id) && !tie ? "winner" : ""}`}>
+            <div
+              key={p.id}
+              className={`battleSeat ${round?.winners.includes(p.id) && !tie ? "winner" : ""}`}
+            >
               <span className="seatName">{p.name}</span>
               {round ? (
-                <DealtCard key={`${round.id}-${i}`} card={round.cards[i]} width={seats.length > 2 ? 78 : 104} delay={i * 120} />
+                <DealtCard
+                  key={`${round.id}-${i}`}
+                  card={round.cards[i]}
+                  width={seats.length > 2 ? 78 : 104}
+                  delay={i * 120}
+                />
               ) : (
-                <PlayingCard card={null} faceUp={false} width={seats.length > 2 ? 78 : 104} />
+                <PlayingCard
+                  card={null}
+                  faceUp={false}
+                  width={seats.length > 2 ? 78 : 104}
+                />
               )}
               <span className="seatWins">🏆 {wins[p.id] || 0}</span>
             </div>
           ))}
         </div>
         <div className="battleMessage">
-          {round ? (tie ? t("Égalité — BATAILLE!", "Tie — WAR!") : `${seats.find((p) => p.id === round.winners[0]).name} ${t("gagne!", "wins!")}`) : " "}
+          {round
+            ? tie
+              ? t("Égalité — BATAILLE!", "Tie — WAR!")
+              : `${seats.find((p) => p.id === round.winners[0])?.name || "?"} ${t("gagne!", "wins!")}`
+            : " "}
         </div>
       </div>
       <div className="optionRow">
@@ -290,15 +416,42 @@ function BattleMode({ players }) {
 }
 
 const DEFAULT_CUSTOM = {
-  fr: ["Passe ton tour", "Rejoue", "Pige deux cartes", "Échange ta place", "Perds 100 $", "Gagne 100 $", "Recule de 3 cases", "Avance de 5 cases"],
-  en: ["Skip your turn", "Play again", "Draw two cards", "Swap places", "Lose $100", "Win $100", "Go back 3 spaces", "Move forward 5 spaces"]
+  fr: [
+    "Passe ton tour",
+    "Rejoue",
+    "Pige deux cartes",
+    "Échange ta place",
+    "Perds 100 $",
+    "Gagne 100 $",
+    "Recule de 3 cases",
+    "Avance de 5 cases",
+  ],
+  en: [
+    "Skip your turn",
+    "Play again",
+    "Draw two cards",
+    "Swap places",
+    "Lose $100",
+    "Win $100",
+    "Go back 3 spaces",
+    "Move forward 5 spaces",
+  ],
 };
 
 function CustomMode() {
   const { t, lang } = useLang();
-  const [list, setList] = useStored("bgh2_custom_cards", DEFAULT_CUSTOM[lang] || DEFAULT_CUSTOM.fr);
-  const [current, setCurrent] = useState(null);
-  const [flipped, setFlipped] = useState(false);
+  const [list, setList] = useStored(
+    "bgh2_custom_cards",
+    DEFAULT_CUSTOM[lang] || DEFAULT_CUSTOM.fr,
+  );
+  const [current, setCurrent] = useStored(
+    "bgh2_cards_custommode_current",
+    null,
+  );
+  const [flipped, setFlipped] = useStored(
+    "bgh2_cards_custommode_flipped",
+    false,
+  );
   const [editing, setEditing] = useState(false);
   const [input, setInput] = useState("");
   const pile = useMemo(() => shuffle(list), [list]);
@@ -360,7 +513,14 @@ function CustomMode() {
                 setInput("");
               }}
             >
-              <input value={input} onChange={(e) => setInput(e.target.value)} placeholder={t("Ex. : Tout le monde recule", "Ex: Everyone moves back")} />
+              <input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder={t(
+                  "Ex. : Tout le monde recule",
+                  "Ex: Everyone moves back",
+                )}
+              />
               <button className="iconButton accentBg" type="submit">
                 <Plus size={20} />
               </button>
@@ -369,7 +529,10 @@ function CustomMode() {
               {list.map((item, i) => (
                 <div className="editRow" key={`${item}-${i}`}>
                   <span>{item}</span>
-                  <button className="iconButton soft" onClick={() => setList(list.filter((_, j) => j !== i))}>
+                  <button
+                    className="iconButton soft"
+                    onClick={() => setList(list.filter((_, j) => j !== i))}
+                  >
                     <Trash2 size={16} />
                   </button>
                 </div>
@@ -384,18 +547,22 @@ function CustomMode() {
 
 export default function CardsScreen({ players }) {
   const { t } = useLang();
-  const [mode, setMode] = useState("draw");
+  const [mode, setMode] = useStored("bgh2_cards_mode", "draw");
   const modes = [
     ["draw", t("Piger", "Draw")],
     ["hands", t("Mains", "Hands")],
     ["battle", t("Bataille", "War")],
-    ["custom", t("Perso", "Custom")]
+    ["custom", t("Perso", "Custom")],
   ];
   return (
     <div className="cardsScreen">
       <div className="segmented">
         {modes.map(([id, label]) => (
-          <button key={id} className={mode === id ? "active" : ""} onClick={() => setMode(id)}>
+          <button
+            key={id}
+            className={mode === id ? "active" : ""}
+            onClick={() => setMode(id)}
+          >
             {label}
           </button>
         ))}
