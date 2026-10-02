@@ -1,25 +1,48 @@
 // Service worker : l'app fonctionne hors ligne après la première visite.
 // Pages : réseau d'abord (pour recevoir les mises à jour), cache en secours.
 // Fichiers statiques (JS, CSS, images) : cache d'abord.
-const CACHE = "bgh-v8";
-const CORE = ["/", "/index.html", "/manifest.webmanifest", "/icon-192.png", "/icon-512.png", "/favicon.png"];
+const CACHE = "bgh-v9";
+const BUILT_ASSETS = []; // Replaced by Vite at build time.
+const CORE = [
+  "/",
+  "/index.html",
+  "/manifest.webmanifest",
+  "/icon-192.png",
+  "/icon-512.png",
+  "/favicon.png",
+  "/apple-touch-icon.png",
+  "/icon-maskable-512.png",
+  "/confidentialite.html",
+];
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(CORE)).then(() => self.skipWaiting()));
+  event.waitUntil(
+    caches
+      .open(CACHE)
+      .then((cache) => cache.addAll([...CORE, ...BUILT_ASSETS])),
+  );
 });
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches
       .keys()
-      .then((keys) => Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key))))
-      .then(() => self.clients.claim())
+      .then((keys) =>
+        Promise.all(
+          keys.filter((key) => key !== CACHE).map((key) => caches.delete(key)),
+        ),
+      )
+      .then(() => self.clients.claim()),
   );
 });
 
 self.addEventListener("fetch", (event) => {
   const { request } = event;
-  if (request.method !== "GET" || new URL(request.url).origin !== self.location.origin) return;
+  if (
+    request.method !== "GET" ||
+    new URL(request.url).origin !== self.location.origin
+  )
+    return;
 
   if (request.mode === "navigate") {
     const path = new URL(request.url).pathname;
@@ -29,11 +52,19 @@ self.addEventListener("fetch", (event) => {
         .then((response) => {
           if (response.ok) {
             const copy = response.clone();
-            caches.open(CACHE).then((cache) => cache.put(isApp ? "/index.html" : request, copy));
+            caches
+              .open(CACHE)
+              .then((cache) =>
+                cache.put(isApp ? "/index.html" : request, copy),
+              );
           }
           return response;
         })
-        .catch(() => caches.match(isApp ? "/index.html" : request).then((hit) => hit || caches.match("/index.html")))
+        .catch(() =>
+          caches
+            .match(isApp ? "/index.html" : request)
+            .then((hit) => hit || caches.match("/index.html")),
+        ),
     );
     return;
   }
@@ -48,7 +79,11 @@ self.addEventListener("fetch", (event) => {
             caches.open(CACHE).then((cache) => cache.put(request, copy));
           }
           return response;
-        })
-    )
+        }),
+    ),
   );
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "SKIP_WAITING") self.skipWaiting();
 });
