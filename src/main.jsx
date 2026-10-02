@@ -6,7 +6,7 @@ import App from "./App.jsx";
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <App />
-  </React.StrictMode>
+  </React.StrictMode>,
 );
 
 // Service worker : mode hors ligne + mises à jour automatiques.
@@ -26,7 +26,24 @@ if ("serviceWorker" in navigator && import.meta.env.PROD) {
     navigator.serviceWorker
       .register("/sw.js", { updateViaCache: "none" })
       .then((reg) => {
-        const check = () => reg.update().catch(() => {});
+        const announce = () => {
+          if (reg.waiting && navigator.serviceWorker.controller)
+            window.dispatchEvent(
+              new CustomEvent("bgh-update-ready", { detail: reg.waiting }),
+            );
+        };
+        announce();
+        reg.addEventListener("updatefound", () => {
+          const worker = reg.installing;
+          worker?.addEventListener("statechange", () => {
+            if (worker.state === "installed") announce();
+          });
+        });
+        const check = () =>
+          reg
+            .update()
+            .then(announce)
+            .catch(() => {});
         check();
         // Revérifie quand on revient dans l'app (téléphone sorti de veille, etc.)
         document.addEventListener("visibilitychange", () => {
