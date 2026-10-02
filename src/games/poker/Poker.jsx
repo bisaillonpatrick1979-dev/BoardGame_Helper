@@ -1,18 +1,51 @@
 // Poker Texas Hold'em ou Omaha (sans limite / pot-limit) contre des joueurs ordinateur
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { Minus, Plus, RotateCcw } from "lucide-react";
 import PlayingCard from "../../cards/PlayingCard.jsx";
-import { recordGame, sfx, useLang, useStored, vibrate } from "../../lib/core.js";
-import { HAND_NAMES, act, botDecision, evaluateOmaha, legalActions, newTable, pot, startHand } from "./engine.js";
+import {
+  recordGame,
+  sfx,
+  useLang,
+  useStored,
+  vibrate,
+} from "../../lib/core.js";
+import {
+  HAND_NAMES,
+  act,
+  botDecision,
+  evaluateOmaha,
+  legalActions,
+  newTable,
+  pot,
+  startHand,
+} from "./engine.js";
 import "./poker.css";
 
 // Positions des adversaires autour de la table (en % de la table)
 const SEATS = {
   1: [[50, 4]],
-  2: [[24, 8], [76, 8]],
-  3: [[13, 30], [50, 3], [87, 30]],
-  4: [[11, 36], [30, 4], [70, 4], [89, 36]],
-  5: [[10, 44], [19, 10], [50, 2], [81, 10], [90, 44]]
+  2: [
+    [24, 8],
+    [76, 8],
+  ],
+  3: [
+    [13, 30],
+    [50, 3],
+    [87, 30],
+  ],
+  4: [
+    [11, 36],
+    [30, 4],
+    [70, 4],
+    [89, 36],
+  ],
+  5: [
+    [10, 44],
+    [19, 10],
+    [50, 2],
+    [81, 10],
+    [90, 44],
+  ],
 };
 
 function actionLabel(action, t) {
@@ -24,14 +57,14 @@ function actionLabel(action, t) {
       raise: t("Relance", "Raise"),
       allin: t("Tapis!", "All-in!"),
       SB: t("Petite blinde", "Small blind"),
-      BB: t("Grosse blinde", "Big blind")
+      BB: t("Grosse blinde", "Big blind"),
     }[action] || ""
   );
 }
 
 function Setup({ onStart }) {
   const { t } = useLang();
-  const [bots, setBots] = useState(3);
+  const [bots, setBots] = useStored("bgh2_save_poker_poker_bots", 3);
   // Réglages sauvegardés : variante et limite de mise
   const [variant, setVariant] = useStored("bgh2_poker_variant", "holdem");
   const [limit, setLimit] = useStored("bgh2_poker_limit", "nl");
@@ -41,10 +74,16 @@ function Setup({ onStart }) {
       <div className="setupCard pk-setup">
         <div className="setupIcon">{omaha ? "♦️" : "♠️"}</div>
         <div className="segmented small">
-          <button className={!omaha ? "active" : ""} onClick={() => setVariant("holdem")}>
+          <button
+            className={!omaha ? "active" : ""}
+            onClick={() => setVariant("holdem")}
+          >
             Texas Hold'em
           </button>
-          <button className={omaha ? "active" : ""} onClick={() => setVariant("omaha")}>
+          <button
+            className={omaha ? "active" : ""}
+            onClick={() => setVariant("omaha")}
+          >
             Omaha
           </button>
         </div>
@@ -52,18 +91,24 @@ function Setup({ onStart }) {
           {omaha
             ? t(
                 "4 cartes à toi, 5 cartes communes. Ta main doit utiliser EXACTEMENT 2 de tes cartes et 3 du tableau. Les blindes doublent toutes les 8 mains.",
-                "4 cards for you, 5 shared cards. Your hand must use EXACTLY 2 of your cards and 3 from the board. Blinds double every 8 hands."
+                "4 cards for you, 5 shared cards. Your hand must use EXACTLY 2 of your cards and 3 from the board. Blinds double every 8 hands.",
               )
             : t(
                 "2 cartes à toi, 5 cartes communes. Fais la meilleure main de 5 cartes ou fais passer les autres! Les blindes doublent toutes les 8 mains.",
-                "2 cards for you, 5 shared cards. Make the best 5-card hand or make everyone fold! Blinds double every 8 hands."
+                "2 cards for you, 5 shared cards. Make the best 5-card hand or make everyone fold! Blinds double every 8 hands.",
               )}
         </p>
         <div className="segmented small">
-          <button className={limit === "nl" ? "active" : ""} onClick={() => setLimit("nl")}>
+          <button
+            className={limit === "nl" ? "active" : ""}
+            onClick={() => setLimit("nl")}
+          >
             {t("Sans limite", "No-limit")}
           </button>
-          <button className={limit === "pl" ? "active" : ""} onClick={() => setLimit("pl")}>
+          <button
+            className={limit === "pl" ? "active" : ""}
+            onClick={() => setLimit("pl")}
+          >
             Pot-limit
           </button>
         </div>
@@ -79,8 +124,13 @@ function Setup({ onStart }) {
             </button>
           </div>
         </div>
-        <div className="setupNames">1 000 {t("jetons chacun", "chips each")}</div>
-        <button className="bigAction" onClick={() => onStart(bots, variant, limit)}>
+        <div className="setupNames">
+          1 000 {t("jetons chacun", "chips each")}
+        </div>
+        <button
+          className="bigAction"
+          onClick={() => onStart(bots, variant, limit)}
+        >
           {t("S'asseoir à la table", "Take a seat")}
         </button>
       </div>
@@ -90,21 +140,35 @@ function Setup({ onStart }) {
 
 export default function Poker({ players }) {
   const { t, lang } = useLang();
-  const [state, setState] = useState(null);
+  const recorded = useRef(null);
+  const [state, setState] = useStored("bgh2_save_poker_poker_state", null);
   const [raiseTo, setRaiseTo] = useState(0);
   const [raising, setRaising] = useState(false);
 
   const me = state?.players[0];
-  const myTurn = state && state.stage !== "done" && state.stage !== "idle" && state.toAct === 0;
+  const myTurn =
+    state &&
+    state.stage !== "done" &&
+    state.stage !== "idle" &&
+    state.toAct === 0;
   const legal = myTurn ? legalActions(state) : null;
   const potSize = state ? pot(state) : 0;
   const opponents = state ? state.players.slice(1) : [];
   const seatPos = SEATS[opponents.length] || SEATS[3];
   const bustedOut = state && me.chips <= 0 && state.stage === "done";
-  const champion = state && state.stage === "done" && state.players.slice(1).every((p) => p.chips <= 0);
+  const champion =
+    state &&
+    state.stage === "done" &&
+    state.players.slice(1).every((p) => p.chips <= 0);
 
   function start(bots, variant = "holdem", limit = "nl") {
-    const table = newTable({ playerName: players?.[0]?.name || t("Toi", "You"), bots, variant, limit });
+    recorded.current = null;
+    const table = newTable({
+      playerName: players?.[0]?.name || t("Toi", "You"),
+      bots,
+      variant,
+      limit,
+    });
     setState(startHand(table));
     sfx.flip();
   }
@@ -113,7 +177,9 @@ export default function Poker({ players }) {
   useEffect(() => {
     if (!state || state.stage === "done" || state.toAct <= 0) return undefined;
     const timer = setTimeout(() => {
-      setState((s) => (s && s.toAct > 0 && s.stage !== "done" ? act(s, botDecision(s)) : s));
+      setState((s) =>
+        s && s.toAct > 0 && s.stage !== "done" ? act(s, botDecision(s)) : s,
+      );
       sfx.tap();
     }, 750);
     return () => clearTimeout(timer);
@@ -121,7 +187,16 @@ export default function Poker({ players }) {
 
   // Fin de main : sons et statistiques
   useEffect(() => {
-    if (!state || state.stage !== "done" || !state.winners) return;
+    if (
+      !state ||
+      state.stage !== "done" ||
+      !state.winners ||
+      state.statsRecordedHand === state.handNo ||
+      recorded.current === state.handNo
+    )
+      return;
+    recorded.current = state.handNo;
+    setState((s) => ({ ...s, statsRecordedHand: s.handNo }));
     const mine = state.winners.find((w) => w.id === "me");
     if (mine) {
       sfx.win();
@@ -145,8 +220,14 @@ export default function Poker({ players }) {
     return state.winners
       .map((w) => {
         const p = state.players.find((x) => x.id === w.id);
-        const who = w.id === "me" ? t("Tu gagnes", "You win") : `${p.name} ${t("gagne", "wins")}`;
-        const hand = w.hand !== null && w.hand !== undefined ? ` — ${HAND_NAMES[lang][w.hand]}` : "";
+        const who =
+          w.id === "me"
+            ? t("Tu gagnes", "You win")
+            : `${p.name} ${t("gagne", "wins")}`;
+        const hand =
+          w.hand !== null && w.hand !== undefined
+            ? ` — ${HAND_NAMES[lang][w.hand]}`
+            : "";
         return `${who} ${w.amount}${hand}`;
       })
       .join(" • ");
@@ -156,11 +237,23 @@ export default function Poker({ players }) {
 
   const omaha = state.variant === "omaha";
   // Omaha : on montre à l'abattage les 5 cartes utilisées par le gagnant (2 privées + 3 du tableau)
-  const showdownWinner = omaha && state.stage === "done" ? state.players.find((p) => p.best && state.winners?.some((w) => w.id === p.id)) : null;
+  const showdownWinner =
+    omaha && state.stage === "done"
+      ? state.players.find(
+          (p) => p.best && state.winners?.some((w) => w.id === p.id),
+        )
+      : null;
   const inBest = (p, card) => !p?.best || p.best.includes(card.id);
-  const myOmahaHand = omaha && state.board.length >= 3 && !me.folded && me.hole.length === 4 ? HAND_NAMES[lang][evaluateOmaha(me.hole, state.board)[0]] : null;
+  const myOmahaHand =
+    omaha && state.board.length >= 3 && !me.folded && me.hole.length === 4
+      ? HAND_NAMES[lang][evaluateOmaha(me.hole, state.board)[0]]
+      : null;
 
-  const showCards = (p) => state.stage === "done" && state.winners?.some((w) => w.hand !== null) && p.inHand && !p.folded;
+  const showCards = (p) =>
+    state.stage === "done" &&
+    state.winners?.some((w) => w.hand !== null) &&
+    p.inHand &&
+    !p.folded;
 
   function doAction(action) {
     setState((s) => act(s, action));
@@ -172,19 +265,31 @@ export default function Poker({ players }) {
     ? [
         [t("Min", "Min"), legal.minRaiseTo],
         ["½ pot", state.currentBet + Math.round(potSize / 2 / 10) * 10],
-        ["Pot", state.limit === "pl" ? legal.maxRaiseTo : state.currentBet + Math.round(potSize / 10) * 10],
-        [t("Tapis", "All-in"), legal.maxRaiseTo]
+        [
+          "Pot",
+          state.limit === "pl"
+            ? legal.maxRaiseTo
+            : state.currentBet + Math.round(potSize / 10) * 10,
+        ],
+        [t("Tapis", "All-in"), legal.maxRaiseTo],
       ]
         // En pot-limit, « Pot » est déjà le maximum : pas de bouton tapis en double
-        .filter(([label]) => state.limit !== "pl" || label !== t("Tapis", "All-in"))
-        .map(([label, v]) => [label, Math.min(legal.maxRaiseTo, Math.max(legal.minRaiseTo, v))])
+        .filter(
+          ([label]) => state.limit !== "pl" || label !== t("Tapis", "All-in"),
+        )
+        .map(([label, v]) => [
+          label,
+          Math.min(legal.maxRaiseTo, Math.max(legal.minRaiseTo, v)),
+        ])
     : [];
 
   return (
     <div className={`game poker ${omaha ? "pk-omaha" : ""}`}>
       <div className="pokerInfo">
         <span>
-          {omaha && <b className="pk-tag">Omaha{state.limit === "pl" ? " PL" : ""}</b>}
+          {omaha && (
+            <b className="pk-tag">Omaha{state.limit === "pl" ? " PL" : ""}</b>
+          )}
           {!omaha && state.limit === "pl" && <b className="pk-tag">PL</b>}
           {t("Main", "Hand")} {state.handNo}
         </span>
@@ -209,7 +314,17 @@ export default function Poker({ players }) {
             >
               <div className="seatCards">
                 {p.hole.map((c, j) => (
-                  <PlayingCard key={j} card={c} faceUp={showCards(p)} width={omaha ? 27 : 30} className={omaha && p.best && showCards(p) && !inBest(p, c) ? "pk-unused" : ""} />
+                  <PlayingCard
+                    key={j}
+                    card={c}
+                    faceUp={showCards(p)}
+                    width={omaha ? 27 : 30}
+                    className={
+                      omaha && p.best && showCards(p) && !inBest(p, c)
+                        ? "pk-unused"
+                        : ""
+                    }
+                  />
                 ))}
               </div>
               <div className="seatName">
@@ -217,7 +332,9 @@ export default function Poker({ players }) {
                 {p.name}
               </div>
               <div className="seatChips">{p.chips}</div>
-              {p.lastAction && <div className="seatAction">{actionLabel(p.lastAction, t)}</div>}
+              {p.lastAction && (
+                <div className="seatAction">{actionLabel(p.lastAction, t)}</div>
+              )}
               {p.bet > 0 && <div className="seatBet">{p.bet}</div>}
             </div>
           );
@@ -236,7 +353,7 @@ export default function Poker({ players }) {
                 </div>
               ) : (
                 <div key={k} className="boardSlot" />
-              )
+              ),
             )}
           </div>
           <div className="pokerPot">
@@ -245,7 +362,9 @@ export default function Poker({ players }) {
         </div>
       </div>
 
-      <div className={`pokerMe ${myTurn ? "acting" : ""} ${state.winners?.some((w) => w.id === "me") ? "winner" : ""}`}>
+      <div
+        className={`pokerMe ${myTurn ? "acting" : ""} ${state.winners?.some((w) => w.id === "me") ? "winner" : ""}`}
+      >
         <div className="myCards">
           {me.hole.map((c, j) => (
             <div
@@ -253,7 +372,11 @@ export default function Poker({ players }) {
               className={`dealIn ${omaha && me.best && state.stage === "done" && !inBest(me, c) ? "dim" : ""}`}
               style={{ animationDelay: `${j * 120}ms` }}
             >
-              <PlayingCard card={c} width={omaha ? 50 : 64} faceUp={!me.folded || state.stage === "done"} />
+              <PlayingCard
+                card={c}
+                width={omaha ? 50 : 64}
+                faceUp={!me.folded || state.stage === "done"}
+              />
             </div>
           ))}
         </div>
@@ -263,8 +386,14 @@ export default function Poker({ players }) {
             {me.name}
           </strong>
           <span className="myChips">💰 {me.chips}</span>
-          {me.bet > 0 && <span className="seatBet static">{t("Mise", "Bet")} {me.bet}</span>}
-          {me.lastAction && !myTurn && <span className="muted">{actionLabel(me.lastAction, t)}</span>}
+          {me.bet > 0 && (
+            <span className="seatBet static">
+              {t("Mise", "Bet")} {me.bet}
+            </span>
+          )}
+          {me.lastAction && !myTurn && (
+            <span className="muted">{actionLabel(me.lastAction, t)}</span>
+          )}
           {myOmahaHand && <span className="pk-handName">{myOmahaHand}</span>}
         </div>
       </div>
@@ -278,10 +407,17 @@ export default function Poker({ players }) {
             </button>
           ) : champion ? (
             <button className="bigAction gold" onClick={() => setState(null)}>
-              🏆 {t("Tu as gagné la table! Rejouer", "You won the table! Play again")}
+              🏆{" "}
+              {t(
+                "Tu as gagné la table! Rejouer",
+                "You won the table! Play again",
+              )}
             </button>
           ) : (
-            <button className="bigAction" onClick={() => setState((s) => startHand(s))}>
+            <button
+              className="bigAction"
+              onClick={() => setState((s) => startHand(s))}
+            >
               {t("Main suivante", "Next hand")}
             </button>
           )}
@@ -291,7 +427,11 @@ export default function Poker({ players }) {
           <div className="raisePanel">
             <div className="raisePresets">
               {presets.map(([label, v]) => (
-                <button key={label} className={raiseTo === v ? "active" : ""} onClick={() => setRaiseTo(v)}>
+                <button
+                  key={label}
+                  className={raiseTo === v ? "active" : ""}
+                  onClick={() => setRaiseTo(v)}
+                >
                   {label}
                 </button>
               ))}
@@ -305,31 +445,57 @@ export default function Poker({ players }) {
               onChange={(e) => setRaiseTo(Number(e.target.value))}
             />
             <div className="actionRow">
-              <button className="bigAction secondary" onClick={() => setRaising(false)}>
+              <button
+                className="bigAction secondary"
+                onClick={() => setRaising(false)}
+              >
                 {t("Annuler", "Cancel")}
               </button>
-              <button className="bigAction gold" onClick={() => doAction({ type: "raise", to: raiseTo })}>
-                {raiseTo >= legal.maxRaiseTo && legal.maxRaiseTo === me.bet + me.chips ? t("Tapis", "All-in") : `${t("Relancer à", "Raise to")} ${raiseTo}`}
+              <button
+                className="bigAction gold"
+                onClick={() => doAction({ type: "raise", to: raiseTo })}
+              >
+                {raiseTo >= legal.maxRaiseTo &&
+                legal.maxRaiseTo === me.bet + me.chips
+                  ? t("Tapis", "All-in")
+                  : `${t("Relancer à", "Raise to")} ${raiseTo}`}
               </button>
             </div>
           </div>
         ) : (
           <div className="actionRow">
-            <button className="bigAction secondary" onClick={() => doAction({ type: "fold" })}>
+            <button
+              className="bigAction secondary"
+              onClick={() => doAction({ type: "fold" })}
+            >
               {t("Passer", "Fold")}
             </button>
-            <button className="bigAction" onClick={() => doAction({ type: legal.canCheck ? "check" : "call" })}>
-              {legal.canCheck ? t("Parole", "Check") : `${t("Suivre", "Call")} ${legal.toCall}`}
+            <button
+              className="bigAction"
+              onClick={() =>
+                doAction({ type: legal.canCheck ? "check" : "call" })
+              }
+            >
+              {legal.canCheck
+                ? t("Parole", "Check")
+                : `${t("Suivre", "Call")} ${legal.toCall}`}
             </button>
             {legal.maxRaiseTo > state.currentBet && legal.toCall < me.chips && (
-              <button className="bigAction gold" onClick={() => setRaising(true)}>
+              <button
+                className="bigAction gold"
+                onClick={() => setRaising(true)}
+              >
                 {t("Relancer", "Raise")}
               </button>
             )}
           </div>
         )
       ) : (
-        <div className="pokerWaiting">{state.toAct > 0 ? `${state.players[state.toAct].name} ${t("réfléchit…", "is thinking…")}` : "…"}</div>
+        <div className="pokerWaiting">
+          {state.toAct > 0
+            ? `${state.players[state.toAct].name} ${t("réfléchit…", "is thinking…")}`
+            : "…"}
+        </div>
       )}
     </div>
   );

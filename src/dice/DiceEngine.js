@@ -4,7 +4,12 @@
 import * as THREE from "three";
 import * as CANNON from "cannon-es";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
-import { DIE_RADIUS, getDefinition, getDieGeometry, getDieMaterials } from "./diceGeometry.js";
+import {
+  DIE_RADIUS,
+  getDefinition,
+  getDieGeometry,
+  getDieMaterials,
+} from "./diceGeometry.js";
 
 const GRAVITY = -60;
 const FIXED_STEP = 1 / 120;
@@ -22,7 +27,8 @@ function ensureAudio() {
   const length = Math.floor(audioCtx.sampleRate * 0.06);
   noiseBuffer = audioCtx.createBuffer(1, length, audioCtx.sampleRate);
   const data = noiseBuffer.getChannelData(0);
-  for (let i = 0; i < length; i += 1) data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, 3);
+  for (let i = 0; i < length; i += 1)
+    data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, 3);
   return audioCtx;
 }
 
@@ -34,7 +40,9 @@ function playClack(strength, onTable) {
   const filter = audioCtx.createBiquadFilter();
   filter.type = "bandpass";
   // Sur le tapis : son plus sourd ; dé contre dé : son plus sec
-  filter.frequency.value = onTable ? 1300 + Math.random() * 500 : 3200 + Math.random() * 1500;
+  filter.frequency.value = onTable
+    ? 1300 + Math.random() * 500
+    : 3200 + Math.random() * 1500;
   filter.Q.value = onTable ? 1.2 : 3;
   const gain = audioCtx.createGain();
   gain.gain.value = Math.min(0.9, strength) * (onTable ? 0.55 : 0.8);
@@ -73,7 +81,14 @@ function makeVignetteTexture() {
   canvas.width = size;
   canvas.height = size;
   const ctx = canvas.getContext("2d");
-  const g = ctx.createRadialGradient(size / 2, size / 2, size * 0.18, size / 2, size / 2, size * 0.5);
+  const g = ctx.createRadialGradient(
+    size / 2,
+    size / 2,
+    size * 0.18,
+    size / 2,
+    size / 2,
+    size * 0.5,
+  );
   g.addColorStop(0, "rgba(0,0,0,0)");
   g.addColorStop(1, "rgba(0,0,0,0.75)");
   ctx.fillStyle = g;
@@ -111,7 +126,11 @@ export class DiceEngine {
 
   // ---------- Initialisation ----------
   initRenderer() {
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: "high-performance" });
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: false,
+      powerPreference: "high-performance",
+    });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFShadowMap;
@@ -158,8 +177,14 @@ export class DiceEngine {
     scene.add(rim);
 
     // Tapis de jeu
-    this.feltMaterial = new THREE.MeshStandardMaterial({ roughness: 0.95, metalness: 0 });
-    const floor = new THREE.Mesh(new THREE.PlaneGeometry(120, 120), this.feltMaterial);
+    this.feltMaterial = new THREE.MeshStandardMaterial({
+      roughness: 0.95,
+      metalness: 0,
+    });
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(120, 120),
+      this.feltMaterial,
+    );
     floor.rotation.x = -Math.PI / 2;
     floor.receiveShadow = true;
     scene.add(floor);
@@ -168,7 +193,11 @@ export class DiceEngine {
     // Vignette pour assombrir les bords du tapis
     const vignette = new THREE.Mesh(
       new THREE.PlaneGeometry(1, 1),
-      new THREE.MeshBasicMaterial({ map: makeVignetteTexture(), transparent: true, depthWrite: false })
+      new THREE.MeshBasicMaterial({
+        map: makeVignetteTexture(),
+        transparent: true,
+        depthWrite: false,
+      }),
     );
     vignette.rotation.x = -Math.PI / 2;
     vignette.position.y = 0.01;
@@ -177,7 +206,12 @@ export class DiceEngine {
 
     // Anneau lumineux pour les dés gardés
     this.holdRingGeometry = new THREE.RingGeometry(0.9, 1.08, 48);
-    this.holdRingMaterial = new THREE.MeshBasicMaterial({ color: 0xfacc15, transparent: true, opacity: 0.9, depthWrite: false });
+    this.holdRingMaterial = new THREE.MeshBasicMaterial({
+      color: 0xfacc15,
+      transparent: true,
+      opacity: 0.9,
+      depthWrite: false,
+    });
   }
 
   initPhysics() {
@@ -190,18 +224,41 @@ export class DiceEngine {
     this.diceMaterial = new CANNON.Material("dice");
     this.floorMaterial = new CANNON.Material("floor");
     this.wallMaterial = new CANNON.Material("wall");
-    world.addContactMaterial(new CANNON.ContactMaterial(this.diceMaterial, this.floorMaterial, { friction: 0.32, restitution: 0.35 }));
-    world.addContactMaterial(new CANNON.ContactMaterial(this.diceMaterial, this.diceMaterial, { friction: 0.12, restitution: 0.45 }));
-    world.addContactMaterial(new CANNON.ContactMaterial(this.diceMaterial, this.wallMaterial, { friction: 0.05, restitution: 0.6 }));
+    world.addContactMaterial(
+      new CANNON.ContactMaterial(this.diceMaterial, this.floorMaterial, {
+        friction: 0.32,
+        restitution: 0.35,
+      }),
+    );
+    world.addContactMaterial(
+      new CANNON.ContactMaterial(this.diceMaterial, this.diceMaterial, {
+        friction: 0.12,
+        restitution: 0.45,
+      }),
+    );
+    world.addContactMaterial(
+      new CANNON.ContactMaterial(this.diceMaterial, this.wallMaterial, {
+        friction: 0.05,
+        restitution: 0.6,
+      }),
+    );
 
-    const floor = new CANNON.Body({ mass: 0, material: this.floorMaterial, shape: new CANNON.Plane() });
+    const floor = new CANNON.Body({
+      mass: 0,
+      material: this.floorMaterial,
+      shape: new CANNON.Plane(),
+    });
     floor.quaternion.setFromEuler(-Math.PI / 2, 0, 0);
     world.addBody(floor);
     this.floorBody = floor;
 
     // Murs invisibles (repositionnés selon la taille de l'écran)
     this.walls = [0, 1, 2, 3, 4].map(() => {
-      const wall = new CANNON.Body({ mass: 0, material: this.wallMaterial, shape: new CANNON.Plane() });
+      const wall = new CANNON.Body({
+        mass: 0,
+        material: this.wallMaterial,
+        shape: new CANNON.Plane(),
+      });
       world.addBody(wall);
       return wall;
     });
@@ -216,7 +273,11 @@ export class DiceEngine {
     this.onPointerDown = (event) => {
       ensureAudio();
       if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
-      this.pointer = { x: event.clientX, y: event.clientY, t: performance.now() };
+      this.pointer = {
+        x: event.clientX,
+        y: event.clientY,
+        t: performance.now(),
+      };
     };
 
     this.onPointerUp = (event) => {
@@ -230,7 +291,10 @@ export class DiceEngine {
       if (dist > 28) {
         // Glisser = lancer dans la direction du geste
         const speed = dist / dt;
-        this.roll({ direction: new THREE.Vector3(dx, 0, dy).normalize(), power: Math.min(1.6, 0.7 + speed * 0.5) });
+        this.roll({
+          direction: new THREE.Vector3(dx, 0, dy).normalize(),
+          power: Math.min(1.6, 0.7 + speed * 0.5),
+        });
         return;
       }
 
@@ -273,7 +337,7 @@ export class DiceEngine {
     const materials = getDieMaterials(sides, palette);
     const shape = new CANNON.ConvexPolyhedron({
       vertices: verts.map((v) => new CANNON.Vec3(v.x, v.y, v.z)),
-      faces: def.faces
+      faces: def.faces,
     });
 
     for (let i = 0; i < count; i += 1) {
@@ -290,7 +354,7 @@ export class DiceEngine {
         angularDamping: 0.14,
         allowSleep: true,
         sleepSpeedLimit: 0.25,
-        sleepTimeLimit: 0.25
+        sleepTimeLimit: 0.25,
       });
       this.world.addBody(body);
 
@@ -300,7 +364,17 @@ export class DiceEngine {
       ring.visible = false;
       this.scene.add(ring);
 
-      const die = { index: i, sides, def, radius, mesh, body, ring, held: false, value: 1 };
+      const die = {
+        index: i,
+        sides,
+        def,
+        radius,
+        mesh,
+        body,
+        ring,
+        held: false,
+        value: 1,
+      };
       body.addEventListener("collide", (e) => this.handleCollision(die, e));
       this.dice.push(die);
 
@@ -327,7 +401,8 @@ export class DiceEngine {
       const col = i % cols;
       const rowCount = Math.min(cols, count - row * cols);
       die.body.position.x = (col - (rowCount - 1) / 2) * spacing;
-      die.body.position.z = this.bounds.centerZ + (row - (rows - 1) / 2) * spacing;
+      die.body.position.z =
+        this.bounds.centerZ + (row - (rows - 1) / 2) * spacing;
     });
   }
 
@@ -337,7 +412,10 @@ export class DiceEngine {
     const b = this.bounds;
     const outside = this.dice.some((d) => {
       const p = d.body.position;
-      return Math.abs(p.x) > b.halfW - d.radius || Math.abs(p.z - b.centerZ) > b.halfD - d.radius;
+      return (
+        Math.abs(p.x) > b.halfW - d.radius ||
+        Math.abs(p.z - b.centerZ) > b.halfD - d.radius
+      );
     });
     if (outside) {
       this.layoutGrid();
@@ -356,7 +434,10 @@ export class DiceEngine {
       localDir = def.normals[def.faceValues.indexOf(value)].clone();
     }
     const q = new THREE.Quaternion().setFromUnitVectors(localDir, up);
-    const yaw = new THREE.Quaternion().setFromAxisAngle(up, Math.random() * Math.PI * 2);
+    const yaw = new THREE.Quaternion().setFromAxisAngle(
+      up,
+      Math.random() * Math.PI * 2,
+    );
     q.premultiply(yaw);
 
     // Hauteur pour que le point le plus bas touche le tapis
@@ -398,7 +479,11 @@ export class DiceEngine {
     // Direction par défaut : vers le fond, avec un angle au hasard
     const dir = direction
       ? direction.clone()
-      : new THREE.Vector3(Math.sin((Math.random() - 0.5) * 1.2), 0, -Math.cos((Math.random() - 0.5) * 1.2)).normalize();
+      : new THREE.Vector3(
+          Math.sin((Math.random() - 0.5) * 1.2),
+          0,
+          -Math.cos((Math.random() - 0.5) * 1.2),
+        ).normalize();
 
     active.forEach((die, n) => {
       const { body } = die;
@@ -406,12 +491,26 @@ export class DiceEngine {
       // On ramasse les dés du côté d'où part le lancer, puis on les projette
       const spread = (n - (active.length - 1) / 2) * die.radius * 2.1;
       const side = new THREE.Vector3(-dir.z, 0, dir.x);
-      const startX = THREE.MathUtils.clamp(-dir.x * b.halfW * 0.55 + side.x * spread, -b.halfW + die.radius, b.halfW - die.radius);
-      const startZ = b.centerZ + THREE.MathUtils.clamp(-dir.z * b.halfD * 0.55 + side.z * spread, -b.halfD + die.radius, b.halfD - die.radius);
+      const startX = THREE.MathUtils.clamp(
+        -dir.x * b.halfW * 0.55 + side.x * spread,
+        -b.halfW + die.radius,
+        b.halfW - die.radius,
+      );
+      const startZ =
+        b.centerZ +
+        THREE.MathUtils.clamp(
+          -dir.z * b.halfD * 0.55 + side.z * spread,
+          -b.halfD + die.radius,
+          b.halfD - die.radius,
+        );
       body.position.set(startX, 2.5 + Math.random() * 2 + die.radius, startZ);
 
       const q = new CANNON.Quaternion();
-      q.setFromEuler(Math.random() * Math.PI * 2, Math.random() * Math.PI * 2, Math.random() * Math.PI * 2);
+      q.setFromEuler(
+        Math.random() * Math.PI * 2,
+        Math.random() * Math.PI * 2,
+        Math.random() * Math.PI * 2,
+      );
       body.quaternion.copy(q);
 
       const speed = (11 + Math.random() * 5) * power;
@@ -420,7 +519,11 @@ export class DiceEngine {
       const vz = (dir.z + side.z * jitter) * speed;
       body.velocity.set(vx, -2 - Math.random() * 4, vz);
       const spin = 24 * power;
-      body.angularVelocity.set((Math.random() - 0.5) * spin, (Math.random() - 0.5) * spin, (Math.random() - 0.5) * spin);
+      body.angularVelocity.set(
+        (Math.random() - 0.5) * spin,
+        (Math.random() - 0.5) * spin,
+        (Math.random() - 0.5) * spin,
+      );
     });
 
     this.rolling = true;
@@ -439,7 +542,8 @@ export class DiceEngine {
     const now = performance.now();
     if (this.sound && now - this.lastSoundAt > 22) {
       this.lastSoundAt = now;
-      const onTable = event.body === this.floorBody || this.walls.includes(event.body);
+      const onTable =
+        event.body === this.floorBody || this.walls.includes(event.body);
       playClack(impact / 18, onTable);
     }
     if (impact > 9 && navigator.vibrate && now - this.lastVibrateAt > 90) {
@@ -470,22 +574,57 @@ export class DiceEngine {
     this.emitResult(true);
   }
 
+  restoreDice({ values, held = [] }) {
+    if (
+      values.length !== this.dice.length ||
+      !values.every(
+        (v, i) => Number.isInteger(v) && v >= 1 && v <= this.dice[i].sides,
+      )
+    )
+      return;
+    this.dice.forEach((die, i) => {
+      this.placeResting(
+        die,
+        die.body.position.x,
+        die.body.position.z,
+        values[i],
+      );
+      die.held = Boolean(held[i]);
+      die.body.type = die.held ? CANNON.Body.STATIC : CANNON.Body.DYNAMIC;
+      die.body.mass = die.held ? 0 : 1;
+      die.body.updateMassProperties();
+    });
+    this.syncMeshes();
+    this.needsRender = true;
+  }
+
   releaseAll() {
     this.dice.forEach((die) => die.held && this.toggleHold(die));
   }
 
   pick(clientX, clientY) {
     const rect = this.renderer.domElement.getBoundingClientRect();
-    const ndc = new THREE.Vector2(((clientX - rect.left) / rect.width) * 2 - 1, -((clientY - rect.top) / rect.height) * 2 + 1);
+    const ndc = new THREE.Vector2(
+      ((clientX - rect.left) / rect.width) * 2 - 1,
+      -((clientY - rect.top) / rect.height) * 2 + 1,
+    );
     this.raycaster.setFromCamera(ndc, this.camera);
-    const hits = this.raycaster.intersectObjects(this.dice.map((d) => d.mesh), false);
+    const hits = this.raycaster.intersectObjects(
+      this.dice.map((d) => d.mesh),
+      false,
+    );
     if (!hits.length) return null;
     return this.dice.find((d) => d.mesh === hits[0].object) || null;
   }
 
   // ---------- Lecture du résultat ----------
   readDie(die) {
-    const q = new THREE.Quaternion(die.body.quaternion.x, die.body.quaternion.y, die.body.quaternion.z, die.body.quaternion.w);
+    const q = new THREE.Quaternion(
+      die.body.quaternion.x,
+      die.body.quaternion.y,
+      die.body.quaternion.z,
+      die.body.quaternion.w,
+    );
     const { def } = die;
     let best = -Infinity;
     let value = 1;
@@ -513,7 +652,10 @@ export class DiceEngine {
     const active = this.dice.filter((d) => !d.held);
     const calm = active.every((d) => {
       const b = d.body;
-      return b.sleepState === CANNON.Body.SLEEPING || (b.velocity.length() < 0.08 && b.angularVelocity.length() < 0.12);
+      return (
+        b.sleepState === CANNON.Body.SLEEPING ||
+        (b.velocity.length() < 0.08 && b.angularVelocity.length() < 0.12)
+      );
     });
     this.calmFrames = calm ? this.calmFrames + 1 : 0;
     const timeout = now - this.rollStartedAt > MAX_ROLL_TIME;
@@ -526,8 +668,16 @@ export class DiceEngine {
       this.calmFrames = 0;
       cocked.forEach((d) => {
         d.body.wakeUp();
-        d.body.velocity.set((Math.random() - 0.5) * 4, 7, (Math.random() - 0.5) * 4);
-        d.body.angularVelocity.set((Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10);
+        d.body.velocity.set(
+          (Math.random() - 0.5) * 4,
+          7,
+          (Math.random() - 0.5) * 4,
+        );
+        d.body.angularVelocity.set(
+          (Math.random() - 0.5) * 10,
+          (Math.random() - 0.5) * 10,
+          (Math.random() - 0.5) * 10,
+        );
       });
       return;
     }
@@ -543,7 +693,7 @@ export class DiceEngine {
     this.options.onResult?.({
       values: this.dice.map((d) => d.value),
       held: this.dice.map((d) => d.held),
-      silent
+      silent,
     });
     this.updateLabels();
   }
@@ -559,7 +709,7 @@ export class DiceEngine {
         value: d.value,
         held: d.held,
         x: ((p.x + 1) / 2) * rect.width,
-        y: ((1 - p.y) / 2) * rect.height
+        y: ((1 - p.y) / 2) * rect.height,
       };
     });
     this.options.onLabels?.(labels);
@@ -568,8 +718,17 @@ export class DiceEngine {
   // ---------- Boucle ----------
   syncMeshes() {
     this.dice.forEach((d) => {
-      d.mesh.position.set(d.body.position.x, d.body.position.y, d.body.position.z);
-      d.mesh.quaternion.set(d.body.quaternion.x, d.body.quaternion.y, d.body.quaternion.z, d.body.quaternion.w);
+      d.mesh.position.set(
+        d.body.position.x,
+        d.body.position.y,
+        d.body.position.z,
+      );
+      d.mesh.quaternion.set(
+        d.body.quaternion.x,
+        d.body.quaternion.y,
+        d.body.quaternion.z,
+        d.body.quaternion.w,
+      );
       d.ring.visible = d.held;
       d.ring.position.set(d.body.position.x, 0.02, d.body.position.z);
     });
@@ -616,7 +775,7 @@ export class DiceEngine {
       [-1, -1],
       [1, -1],
       [1, 1],
-      [-1, 1]
+      [-1, 1],
     ].map(([x, y]) => {
       this.raycaster.setFromCamera(new THREE.Vector2(x, y), this.camera);
       const out = new THREE.Vector3();

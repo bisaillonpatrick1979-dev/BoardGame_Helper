@@ -27,20 +27,34 @@ const isBlackjack = (cards) => cards.length === 2 && handValue(cards) === 21;
 export default function Blackjack() {
   const { t } = useLang();
   const [chips, setChips] = useStored("bgh2_bj_chips", 1000);
-  const [bet, setBet] = useState(0);
-  const [phase, setPhase] = useState("bet"); // bet | player | dealer | done
-  const [player, setPlayer] = useState([]);
-  const [dealer, setDealer] = useState([]);
-  const [message, setMessage] = useState("");
-  const [outcome, setOutcome] = useState(null);
-  const shoe = useRef(shuffledDeck({ decks: 6 }));
+  const [bet, setBet] = useStored("bgh2_bj_bet", 0);
+  const [phase, setPhase] = useStored("bgh2_bj_phase", "bet"); // bet | player | dealer | done
+  const [player, setPlayer] = useStored("bgh2_bj_player", []);
+  const [dealer, setDealer] = useStored("bgh2_bj_dealer", []);
+  const [message, setMessage] = useStored("bgh2_bj_message", "");
+  const [outcome, setOutcome] = useStored("bgh2_bj_outcome", null);
+  const [savedShoe, setSavedShoe] = useStored("bgh2_bj_shoe", () =>
+    shuffledDeck({ decks: 6 }),
+  );
+  const shoe = useRef(savedShoe);
   const timers = useRef([]);
 
-  useEffect(() => () => timers.current.forEach(clearTimeout), []);
+  useEffect(() => {
+    // Resume an interrupted dealer turn, including React StrictMode remounts.
+    if (phase === "dealer") {
+      if (handValue(player) > 21 || isBlackjack(player) || isBlackjack(dealer))
+        later(() => settle(player, dealer, bet), 400);
+      else stand(player, bet);
+    }
+    return () => timers.current.forEach(clearTimeout);
+  }, []);
 
   function draw() {
     if (shoe.current.length < 40) shoe.current = shuffledDeck({ decks: 6 });
-    return shoe.current.shift();
+    const card = shoe.current[0];
+    shoe.current = shoe.current.slice(1);
+    setSavedShoe(shoe.current);
+    return card;
   }
 
   function later(fn, ms) {
@@ -157,7 +171,10 @@ export default function Blackjack() {
       result = "push";
     }
     setChips((c) => c + win);
-    recordGame("blackjack", result === "push" ? "draw" : result === "win" ? "win" : "loss");
+    recordGame(
+      "blackjack",
+      result === "push" ? "draw" : result === "win" ? "win" : "loss",
+    );
     setMessage(msg);
     setOutcome(result);
     setPhase("done");
@@ -171,28 +188,46 @@ export default function Blackjack() {
   const hideHole = phase === "player";
   const dealerShown = hideHole ? [dealer[0]] : dealer;
   const cardWidth = Math.max(player.length, dealer.length) > 4 ? 62 : 76;
-  const broke = chips <= 0 && bet === 0 && phase !== "player" && phase !== "dealer";
+  const broke =
+    chips <= 0 && bet === 0 && phase !== "player" && phase !== "dealer";
 
   return (
     <div className="game blackjack">
       <div className="bjTable">
         <div className="bjSide">
           <span className="bjLabel">
-            {t("Croupier", "Dealer")} {dealer.length > 0 && <b>{handValue(dealerShown.filter(Boolean))}</b>}
+            {t("Croupier", "Dealer")}{" "}
+            {dealer.length > 0 && (
+              <b>{handValue(dealerShown.filter(Boolean))}</b>
+            )}
           </span>
           <div className="bjHand">
             {dealer.map((card, i) => (
-              <DealtCard key={card.id + i} card={card} width={cardWidth} faceUp={!(hideHole && i === 1)} delay={i < 2 ? i * 160 + 80 : 0} />
+              <DealtCard
+                key={card.id + i}
+                card={card}
+                width={cardWidth}
+                faceUp={!(hideHole && i === 1)}
+                delay={i < 2 ? i * 160 + 80 : 0}
+              />
             ))}
           </div>
         </div>
 
-        <div className={`bjMessage ${outcome || ""}`}>{message || (phase === "bet" ? t("Place ta mise", "Place your bet") : " ")}</div>
+        <div className={`bjMessage ${outcome || ""}`}>
+          {message ||
+            (phase === "bet" ? t("Place ta mise", "Place your bet") : " ")}
+        </div>
 
         <div className="bjSide">
           <div className="bjHand">
             {player.map((card, i) => (
-              <DealtCard key={card.id + i} card={card} width={cardWidth} delay={i < 2 ? i * 160 : 0} />
+              <DealtCard
+                key={card.id + i}
+                card={card}
+                width={cardWidth}
+                delay={i < 2 ? i * 160 : 0}
+              />
             ))}
           </div>
           <span className="bjLabel">
@@ -213,11 +248,22 @@ export default function Blackjack() {
       {(phase === "bet" || phase === "done") && (
         <div className="chipRow">
           {CHIPS.map((v) => (
-            <button key={v} className={`casinoChip c${v}`} onClick={() => addChip(v)} disabled={v + (phase === "done" ? 0 : bet) > chips}>
+            <button
+              key={v}
+              className={`casinoChip c${v}`}
+              onClick={() => addChip(v)}
+              disabled={v + (phase === "done" ? 0 : bet) > chips}
+            >
               {v}
             </button>
           ))}
-          <button className="chipButton" onClick={() => { setBet(0); if (phase === "done") newRound(); }}>
+          <button
+            className="chipButton"
+            onClick={() => {
+              setBet(0);
+              if (phase === "done") newRound();
+            }}
+          >
             {t("Effacer", "Clear")}
           </button>
         </div>
@@ -257,7 +303,10 @@ export default function Blackjack() {
         </button>
       )}
       {broke && (
-        <button className="chipButton accent center" onClick={() => setChips(1000)}>
+        <button
+          className="chipButton accent center"
+          onClick={() => setChips(1000)}
+        >
           {t("Recharger 1000 jetons", "Refill 1000 chips")}
         </button>
       )}

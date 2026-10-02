@@ -1,22 +1,45 @@
 // Poker vidéo solo : « Jacks or Better » (table 9/6) ou « Deuces Wild » (les 2 sont des jokers)
 import { useEffect, useRef, useState } from "react";
 import PlayingCard from "../../cards/PlayingCard.jsx";
-import { recordGame, sfx, useLang, useStored, vibrate } from "../../lib/core.js";
+import {
+  recordGame,
+  sfx,
+  useLang,
+  useStored,
+  vibrate,
+} from "../../lib/core.js";
 import { Confetti } from "../Hangman.jsx";
-import { PAYTABLES, dealVideo, drawVideo, evaluateVideo, payout } from "./videoPoker.js";
+import {
+  PAYTABLES,
+  dealVideo,
+  drawVideo,
+  evaluateVideo,
+  payout,
+} from "./videoPoker.js";
 import "./poker.css";
 
 const START_CREDITS = 100;
 const STEP_MS = 110; // délai entre deux cartes qui se retournent
 // Grosses mains : confettis
-const BIG = ["royal", "naturalRoyal", "fourDeuces", "wildRoyal", "fiveKind", "straightFlush", "fourKind"];
+const BIG = [
+  "royal",
+  "naturalRoyal",
+  "fourDeuces",
+  "wildRoyal",
+  "fiveKind",
+  "straightFlush",
+  "fourKind",
+];
 
 export default function VideoPoker() {
   const { t, lang } = useLang();
   const [game, setGame] = useStored("bgh2_videopoker_game", "jacks");
-  const [credits, setCredits] = useStored("bgh2_videopoker_credits", START_CREDITS);
+  const [credits, setCredits] = useStored(
+    "bgh2_videopoker_credits",
+    START_CREDITS,
+  );
   const [bet, setBet] = useStored("bgh2_videopoker_bet", 5);
-  const [hand, setHand] = useState(null); // état pur de videoPoker.js
+  const [hand, setHand] = useStored("bgh2_save_poker_videopoker_hand", null); // état pur de videoPoker.js
   const [shown, setShown] = useState([true, true, true, true, true]); // cartes face visible
   const [busy, setBusy] = useState(false);
   const timers = useRef([]);
@@ -26,7 +49,11 @@ export default function VideoPoker() {
   useEffect(() => {
     const el = cardsRef.current;
     if (!el || typeof ResizeObserver === "undefined") return undefined;
-    const ro = new ResizeObserver(() => setCardW(Math.max(52, Math.min(104, Math.floor((el.clientWidth - 24) / 5)))));
+    const ro = new ResizeObserver(() =>
+      setCardW(
+        Math.max(52, Math.min(104, Math.floor((el.clientWidth - 24) / 5))),
+      ),
+    );
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
@@ -35,7 +62,8 @@ export default function VideoPoker() {
   const stage = hand?.stage || "idle";
   const holding = stage === "hold";
   // Main actuelle (indice pendant qu'on choisit ses cartes)
-  const liveKey = hand && holding && !busy ? evaluateVideo(game, hand.hand) : null;
+  const liveKey =
+    hand && holding && !busy ? evaluateVideo(game, hand.hand) : null;
   const resultKey = stage === "result" && !busy ? hand.result : null;
   const activeBet = hand ? hand.bet : Math.min(bet, Math.max(1, credits));
 
@@ -48,17 +76,23 @@ export default function VideoPoker() {
     setShown((s) => s.map((v, i) => (indices.includes(i) ? false : v)));
     indices.forEach((idx, k) => {
       timers.current.push(
-        setTimeout(() => {
-          setShown((s) => s.map((v, i) => (i === idx ? true : v)));
-          sfx.flip();
-        }, 260 + k * STEP_MS)
+        setTimeout(
+          () => {
+            setShown((s) => s.map((v, i) => (i === idx ? true : v)));
+            sfx.flip();
+          },
+          260 + k * STEP_MS,
+        ),
       );
     });
     timers.current.push(
-      setTimeout(() => {
-        setBusy(false);
-        done?.();
-      }, 320 + indices.length * STEP_MS + 180)
+      setTimeout(
+        () => {
+          setBusy(false);
+          done?.();
+        },
+        320 + indices.length * STEP_MS + 180,
+      ),
     );
   }
 
@@ -76,18 +110,25 @@ export default function VideoPoker() {
   function draw() {
     if (busy || !holding) return;
     const next = drawVideo(hand, game);
-    const replaced = hand.held.map((keep, i) => (keep ? -1 : i)).filter((i) => i >= 0);
+    const replaced = hand.held
+      .map((keep, i) => (keep ? -1 : i))
+      .filter((i) => i >= 0);
     setHand(next);
     if (replaced.length) sfx.deal();
+    // Settle before the animation so leaving the screen cannot lose a payout.
+    setCredits((c) => c + next.win);
+    recordGame(
+      "videopoker",
+      next.win > next.bet ? "win" : next.win === next.bet ? "draw" : "loss",
+      credits + next.win,
+    );
     reveal(replaced, () => {
       if (next.win > 0) {
-        setCredits((c) => c + next.win);
         if (BIG.includes(next.result)) {
           sfx.win();
           vibrate([40, 40, 120]);
         } else sfx.good();
       } else sfx.lose();
-      recordGame("videopoker", next.win > next.bet ? "win" : next.win === next.bet ? "draw" : "loss", credits + next.win);
     });
   }
 
@@ -129,7 +170,12 @@ export default function VideoPoker() {
   const resultRow = resultKey ? table.find((r) => r.key === resultKey) : null;
 
   let banner;
-  if (stage === "idle") banner = <div className="vp-banner muted">{t("Choisis ta mise puis donne", "Pick your bet, then deal")}</div>;
+  if (stage === "idle")
+    banner = (
+      <div className="vp-banner muted">
+        {t("Choisis ta mise puis donne", "Pick your bet, then deal")}
+      </div>
+    );
   else if (busy) banner = <div className="vp-banner muted">…</div>;
   else if (holding)
     banner = (
@@ -144,17 +190,32 @@ export default function VideoPoker() {
         {rowName(resultRow)} — {t("gagné", "won")} {hand.win}!
       </div>
     );
-  else banner = <div className="vp-banner">{t("Pas de chance… Rejoue!", "No luck… Play again!")}</div>;
+  else
+    banner = (
+      <div className="vp-banner">
+        {t("Pas de chance… Rejoue!", "No luck… Play again!")}
+      </div>
+    );
 
   return (
     <div className="game vp">
-      {resultRow && BIG.includes(resultKey) && <Confetti key={hand.hand.map((c) => c.id).join()} />}
+      {resultRow && BIG.includes(resultKey) && (
+        <Confetti key={hand.hand.map((c) => c.id).join()} />
+      )}
       <div className="vp-top">
         <div className="segmented small">
-          <button className={game === "jacks" ? "active" : ""} disabled={holding || busy} onClick={() => switchGame("jacks")}>
+          <button
+            className={game === "jacks" ? "active" : ""}
+            disabled={holding || busy}
+            onClick={() => switchGame("jacks")}
+          >
             Jacks or Better
           </button>
-          <button className={game === "deuces" ? "active" : ""} disabled={holding || busy} onClick={() => switchGame("deuces")}>
+          <button
+            className={game === "deuces" ? "active" : ""}
+            disabled={holding || busy}
+            onClick={() => switchGame("deuces")}
+          >
             Deuces Wild
           </button>
         </div>
@@ -164,10 +225,20 @@ export default function VideoPoker() {
         <table className="vp-pay">
           <tbody>
             {table.map((r) => (
-              <tr key={r.key} className={resultKey === r.key ? "hit" : liveKey === r.key ? "hint" : ""}>
+              <tr
+                key={r.key}
+                className={
+                  resultKey === r.key ? "hit" : liveKey === r.key ? "hint" : ""
+                }
+              >
                 <td>{rowName(r)}</td>
                 {[1, 2, 3, 4, 5].map((b) => (
-                  <td key={b} className={b === activeBet && resultKey !== r.key ? "col" : ""}>
+                  <td
+                    key={b}
+                    className={
+                      b === activeBet && resultKey !== r.key ? "col" : ""
+                    }
+                  >
                     {payout(game, r.key, b)}
                   </td>
                 ))}
@@ -184,12 +255,32 @@ export default function VideoPoker() {
             const held = hand?.held[i] && stage !== "idle";
             return (
               <div key={i} className={`vp-slot ${held ? "held" : ""}`}>
-                <div key={card ? card.id : `vide-${i}`} className={card ? "dealIn" : ""} style={{ animationDelay: `${i * 60}ms` }}>
-                  <PlayingCard card={card || null} faceUp={!!card && shown[i]} width={cardW} back="red" onClick={holding ? () => toggleHold(i) : undefined} />
+                <div
+                  key={card ? card.id : `vide-${i}`}
+                  className={card ? "dealIn" : ""}
+                  style={{ animationDelay: `${i * 60}ms` }}
+                >
+                  <PlayingCard
+                    card={card || null}
+                    faceUp={!!card && shown[i]}
+                    width={cardW}
+                    back="red"
+                    onClick={holding ? () => toggleHold(i) : undefined}
+                  />
                 </div>
-                {game === "deuces" && card?.rank === "2" && shown[i] && <span className="vp-wild">WILD</span>}
-                <button className="vp-held" onClick={() => toggleHold(i)} disabled={!holding || busy}>
-                  {held ? t("GARDÉE", "HELD") : holding ? t("garder", "hold") : " "}
+                {game === "deuces" && card?.rank === "2" && shown[i] && (
+                  <span className="vp-wild">WILD</span>
+                )}
+                <button
+                  className="vp-held"
+                  onClick={() => toggleHold(i)}
+                  disabled={!holding || busy}
+                >
+                  {held
+                    ? t("GARDÉE", "HELD")
+                    : holding
+                      ? t("garder", "hold")
+                      : " "}
                 </button>
               </div>
             );
@@ -221,14 +312,25 @@ export default function VideoPoker() {
             sfx.good();
           }}
         >
-          {t(`Plus de crédits — recharger ${START_CREDITS}`, `Out of credits — reload ${START_CREDITS}`)}
+          {t(
+            `Plus de crédits — recharger ${START_CREDITS}`,
+            `Out of credits — reload ${START_CREDITS}`,
+          )}
         </button>
       ) : (
         <div className="vp-controls">
-          <button className="bigAction secondary" onClick={betOne} disabled={holding || busy}>
+          <button
+            className="bigAction secondary"
+            onClick={betOne}
+            disabled={holding || busy}
+          >
             {t("Mise +1", "Bet +1")}
           </button>
-          <button className="bigAction secondary" onClick={betMax} disabled={holding || busy}>
+          <button
+            className="bigAction secondary"
+            onClick={betMax}
+            disabled={holding || busy}
+          >
             {t("Mise max", "Max bet")}
           </button>
           {holding ? (

@@ -2,7 +2,7 @@
 import { useRef, useState } from "react";
 import { Dice5, Minus, Plus, RotateCcw } from "lucide-react";
 import Dice3D from "../dice/Dice3D.jsx";
-import { sfx, useLang, vibrate, recordGame } from "../lib/core.js";
+import { sfx, useLang, vibrate, recordGame, useStored } from "../lib/core.js";
 import { feltFor } from "../screens/SettingsSheet.jsx";
 import { Confetti } from "./Hangman.jsx";
 
@@ -11,19 +11,75 @@ const sum = (values) => values.reduce((s, v) => s + v, 0);
 const counts = (values) => [1, 2, 3, 4, 5, 6].map((f) => count(values, f));
 const hasRun = (values, len) => {
   const set = new Set(values);
-  const runs = len === 4 ? [[1, 2, 3, 4], [2, 3, 4, 5], [3, 4, 5, 6]] : [[1, 2, 3, 4, 5], [2, 3, 4, 5, 6]];
+  const runs =
+    len === 4
+      ? [
+          [1, 2, 3, 4],
+          [2, 3, 4, 5],
+          [3, 4, 5, 6],
+        ]
+      : [
+          [1, 2, 3, 4, 5],
+          [2, 3, 4, 5, 6],
+        ];
   return runs.some((run) => run.every((v) => set.has(v)));
 };
 
 const CATEGORIES = [
-  { id: "1", fr: "As (1)", en: "Ones", score: (v) => count(v, 1) * 1, upper: true },
-  { id: "2", fr: "Deux", en: "Twos", score: (v) => count(v, 2) * 2, upper: true },
-  { id: "3", fr: "Trois", en: "Threes", score: (v) => count(v, 3) * 3, upper: true },
-  { id: "4", fr: "Quatre", en: "Fours", score: (v) => count(v, 4) * 4, upper: true },
-  { id: "5", fr: "Cinq", en: "Fives", score: (v) => count(v, 5) * 5, upper: true },
-  { id: "6", fr: "Six", en: "Sixes", score: (v) => count(v, 6) * 6, upper: true },
-  { id: "brelan", fr: "Brelan", en: "3 of a kind", score: (v) => (Math.max(...counts(v)) >= 3 ? sum(v) : 0) },
-  { id: "carre", fr: "Carré", en: "4 of a kind", score: (v) => (Math.max(...counts(v)) >= 4 ? sum(v) : 0) },
+  {
+    id: "1",
+    fr: "As (1)",
+    en: "Ones",
+    score: (v) => count(v, 1) * 1,
+    upper: true,
+  },
+  {
+    id: "2",
+    fr: "Deux",
+    en: "Twos",
+    score: (v) => count(v, 2) * 2,
+    upper: true,
+  },
+  {
+    id: "3",
+    fr: "Trois",
+    en: "Threes",
+    score: (v) => count(v, 3) * 3,
+    upper: true,
+  },
+  {
+    id: "4",
+    fr: "Quatre",
+    en: "Fours",
+    score: (v) => count(v, 4) * 4,
+    upper: true,
+  },
+  {
+    id: "5",
+    fr: "Cinq",
+    en: "Fives",
+    score: (v) => count(v, 5) * 5,
+    upper: true,
+  },
+  {
+    id: "6",
+    fr: "Six",
+    en: "Sixes",
+    score: (v) => count(v, 6) * 6,
+    upper: true,
+  },
+  {
+    id: "brelan",
+    fr: "Brelan",
+    en: "3 of a kind",
+    score: (v) => (Math.max(...counts(v)) >= 3 ? sum(v) : 0),
+  },
+  {
+    id: "carre",
+    fr: "Carré",
+    en: "4 of a kind",
+    score: (v) => (Math.max(...counts(v)) >= 4 ? sum(v) : 0),
+  },
   {
     id: "full",
     fr: "Full",
@@ -31,39 +87,76 @@ const CATEGORIES = [
     score: (v) => {
       const c = counts(v).filter(Boolean).sort();
       return c.length === 2 && c[0] === 2 && c[1] === 3 ? 25 : 0;
-    }
+    },
   },
-  { id: "petite", fr: "Petite suite", en: "Small straight", score: (v) => (hasRun(v, 4) ? 30 : 0) },
-  { id: "grande", fr: "Grande suite", en: "Large straight", score: (v) => (hasRun(v, 5) ? 40 : 0) },
-  { id: "yams", fr: "Yam's", en: "Yahtzee", score: (v) => (Math.max(...counts(v)) === 5 ? 50 : 0) },
-  { id: "chance", fr: "Chance", en: "Chance", score: (v) => sum(v) }
+  {
+    id: "petite",
+    fr: "Petite suite",
+    en: "Small straight",
+    score: (v) => (hasRun(v, 4) ? 30 : 0),
+  },
+  {
+    id: "grande",
+    fr: "Grande suite",
+    en: "Large straight",
+    score: (v) => (hasRun(v, 5) ? 40 : 0),
+  },
+  {
+    id: "yams",
+    fr: "Yam's",
+    en: "Yahtzee",
+    score: (v) => (Math.max(...counts(v)) === 5 ? 50 : 0),
+  },
+  { id: "chance", fr: "Chance", en: "Chance", score: (v) => sum(v) },
 ];
 
 function totals(sheet) {
-  const upper = CATEGORIES.filter((c) => c.upper).reduce((s, c) => s + (sheet[c.id] ?? 0), 0);
+  const upper = CATEGORIES.filter((c) => c.upper).reduce(
+    (s, c) => s + (sheet[c.id] ?? 0),
+    0,
+  );
   const bonus = upper >= 63 ? 35 : 0;
-  const lower = CATEGORIES.filter((c) => !c.upper).reduce((s, c) => s + (sheet[c.id] ?? 0), 0);
+  const lower = CATEGORIES.filter((c) => !c.upper).reduce(
+    (s, c) => s + (sheet[c.id] ?? 0),
+    0,
+  );
   return { upper, bonus, total: upper + bonus + lower };
 }
 
 export default function Yams({ players, theme, sound }) {
   const { t, lang } = useLang();
   const diceRef = useRef(null);
-  const [setup, setSetup] = useState(true);
-  const [nbPlayers, setNbPlayers] = useState(Math.min(6, Math.max(1, players.length)));
-  const [sheets, setSheets] = useState([]);
-  const [current, setCurrent] = useState(0);
-  const [rollsLeft, setRollsLeft] = useState(3);
-  const [values, setValues] = useState([]);
-  const [hasRolled, setHasRolled] = useState(false);
+  const [setup, setSetup] = useStored("bgh2_yams_setup", true);
+  const [nbPlayers, setNbPlayers] = useStored(
+    "bgh2_yams_nbPlayers",
+    Math.min(6, Math.max(1, players.length)),
+  );
+  const [sheets, setSheets] = useStored("bgh2_yams_sheets", []);
+  const [current, setCurrent] = useStored("bgh2_yams_current", 0);
+  const [rollsLeft, setRollsLeft] = useStored("bgh2_yams_rollsLeft", 3);
+  const [values, setValues] = useStored("bgh2_yams_values", []);
+  const [hasRolled, setHasRolled] = useStored("bgh2_yams_hasRolled", false);
   const [rolling, setRolling] = useState(false);
+  const [held, setHeld] = useStored("bgh2_yams_held", [
+    false,
+    false,
+    false,
+    false,
+    false,
+  ]);
+  const initialDice = useRef({ values, held });
 
   // Références pour les vérifications du moteur 3D (toujours à jour)
   const state = useRef({});
   state.current = { rollsLeft, hasRolled, rolling };
 
-  const names = Array.from({ length: nbPlayers }, (_, i) => players[i]?.name || `${t("Joueur", "Player")} ${i + 1}`);
-  const finished = sheets.length > 0 && sheets.every((s) => CATEGORIES.every((c) => s[c.id] !== undefined));
+  const names = Array.from(
+    { length: nbPlayers },
+    (_, i) => players[i]?.name || `${t("Joueur", "Player")} ${i + 1}`,
+  );
+  const finished =
+    sheets.length > 0 &&
+    sheets.every((s) => CATEGORIES.every((c) => s[c.id] !== undefined));
 
   function start() {
     setSheets(Array.from({ length: nbPlayers }, () => ({})));
@@ -71,13 +164,17 @@ export default function Yams({ players, theme, sound }) {
     setRollsLeft(3);
     setHasRolled(false);
     setValues([]);
+    setHeld([false, false, false, false, false]);
+    initialDice.current = { values: [], held: [] };
     setSetup(false);
   }
 
   function choose(cat) {
     if (!hasRolled || rolling || sheets[current][cat.id] !== undefined) return;
     const points = cat.score(values);
-    const next = sheets.map((s, i) => (i === current ? { ...s, [cat.id]: points } : s));
+    const next = sheets.map((s, i) =>
+      i === current ? { ...s, [cat.id]: points } : s,
+    );
     setSheets(next);
     if (points > 0) sfx.good();
     else sfx.bad();
@@ -85,17 +182,25 @@ export default function Yams({ players, theme, sound }) {
       sfx.win();
       vibrate([60, 40, 60, 40, 120]);
     }
-    const done = next.every((s) => CATEGORIES.every((c) => s[c.id] !== undefined));
+    const done = next.every((s) =>
+      CATEGORIES.every((c) => s[c.id] !== undefined),
+    );
     if (done) {
       setTimeout(sfx.win, 400);
       const finalTotals = next.map((s) => totals(s).total);
-      recordGame("yams", nbPlayers === 1 ? "win" : "played", Math.max(...finalTotals));
+      recordGame(
+        "yams",
+        nbPlayers === 1 ? "win" : "played",
+        Math.max(...finalTotals),
+      );
       return;
     }
     setCurrent((current + 1) % nbPlayers);
     setRollsLeft(3);
     setHasRolled(false);
     diceRef.current?.releaseAll();
+    setHeld([false, false, false, false, false]);
+    setValues([]);
   }
 
   if (setup) {
@@ -107,7 +212,7 @@ export default function Yams({ players, theme, sound }) {
           <p className="muted">
             {t(
               "3 lancers par tour. Touche un dé pour le garder, puis choisis une case. Le plus gros total gagne!",
-              "3 rolls per turn. Tap a die to keep it, then pick a box. Highest total wins!"
+              "3 rolls per turn. Tap a die to keep it, then pick a box. Highest total wins!",
             )}
           </p>
           <div className="optionRow">
@@ -133,12 +238,18 @@ export default function Yams({ players, theme, sound }) {
 
   const sheet = sheets[current] || {};
   const allTotals = sheets.map(totals);
-  const winner = finished ? allTotals.reduce((best, tt, i) => (tt.total > allTotals[best].total ? i : best), 0) : -1;
+  const winner = finished
+    ? allTotals.reduce(
+        (best, tt, i) => (tt.total > allTotals[best].total ? i : best),
+        0,
+      )
+    : -1;
 
   return (
     <div className="game yams">
       <Dice3D
         ref={diceRef}
+        initialDice={initialDice.current}
         className="yamsTray"
         sides={6}
         count={5}
@@ -149,10 +260,11 @@ export default function Yams({ players, theme, sound }) {
         canHold={() => state.current.hasRolled && state.current.rollsLeft > 0}
         onRollStart={() => {
           setRolling(true);
-          setRollsLeft((r) => r - 1);
         }}
         onResult={(r) => {
+          setHeld(r.held);
           if (r.silent) return;
+          setRollsLeft((left) => Math.max(0, left - 1));
           setRolling(false);
           setValues(r.values);
           setHasRolled(true);
@@ -161,14 +273,24 @@ export default function Yams({ players, theme, sound }) {
 
       <div className="yamsBar">
         <span className="yamsTurn">
-          {finished ? t("Partie terminée", "Game over") : <>{t("Tour de", "Turn:")} <strong>{names[current]}</strong></>}
+          {finished ? (
+            t("Partie terminée", "Game over")
+          ) : (
+            <>
+              {t("Tour de", "Turn:")} <strong>{names[current]}</strong>
+            </>
+          )}
         </span>
         <span className="rollDots" aria-label={`${rollsLeft}`}>
           {[0, 1, 2].map((i) => (
             <i key={i} className={i < rollsLeft ? "on" : ""} />
           ))}
         </span>
-        <button className="bigAction compact" onClick={() => diceRef.current?.roll()} disabled={rolling || rollsLeft === 0 || finished}>
+        <button
+          className="bigAction compact"
+          onClick={() => diceRef.current?.roll()}
+          disabled={rolling || rollsLeft === 0 || finished}
+        >
           <Dice5 size={20} />
           {rollsLeft === 0 ? t("Choisis", "Pick") : t("Lancer", "Roll")}
         </button>
@@ -188,14 +310,27 @@ export default function Yams({ players, theme, sound }) {
           </thead>
           <tbody>
             {CATEGORIES.map((cat, idx) => {
-              const preview = hasRolled && !rolling && sheet[cat.id] === undefined && !finished;
+              const preview =
+                hasRolled &&
+                !rolling &&
+                sheet[cat.id] === undefined &&
+                !finished;
               return [
-                <tr key={cat.id} className={preview ? "pickable" : ""} onClick={() => preview && choose(cat)}>
+                <tr
+                  key={cat.id}
+                  className={preview ? "pickable" : ""}
+                  onClick={() => preview && choose(cat)}
+                >
                   <td className="catName">{cat[lang] || cat.fr}</td>
                   {sheets.map((s, i) => (
-                    <td key={i} className={i === current && !finished ? "cur" : ""}>
+                    <td
+                      key={i}
+                      className={i === current && !finished ? "cur" : ""}
+                    >
                       {s[cat.id] !== undefined ? (
-                        <b className={s[cat.id] === 0 ? "zero" : ""}>{s[cat.id]}</b>
+                        <b className={s[cat.id] === 0 ? "zero" : ""}>
+                          {s[cat.id]}
+                        </b>
                       ) : i === current && preview ? (
                         <span className="preview">{cat.score(values)}</span>
                       ) : (
@@ -206,14 +341,16 @@ export default function Yams({ players, theme, sound }) {
                 </tr>,
                 idx === 5 && (
                   <tr key="bonus" className="subtotal">
-                    <td className="catName">{t("Bonus (63+)", "Bonus (63+)")}</td>
+                    <td className="catName">
+                      {t("Bonus (63+)", "Bonus (63+)")}
+                    </td>
                     {allTotals.map((tt, i) => (
                       <td key={i}>
                         {tt.bonus ? <b>35</b> : <small>{tt.upper}/63</small>}
                       </td>
                     ))}
                   </tr>
-                )
+                ),
               ];
             })}
             <tr className="grandTotal">
@@ -228,12 +365,41 @@ export default function Yams({ players, theme, sound }) {
         </table>
       </div>
 
+      {!finished && (
+        <button
+          className="chipButton"
+          onClick={() => {
+            if (
+              window.confirm(
+                t(
+                  "Effacer cette partie et recommencer?",
+                  "Clear this game and restart?",
+                ),
+              )
+            )
+              setSetup(true);
+          }}
+        >
+          {t("Recommencer", "Restart")}
+        </button>
+      )}
       {finished && (
         <div className="resultBanner win floating">
           <strong>
-            🏆 {names[winner]} {t("gagne avec", "wins with")} {allTotals[winner].total}!
+            🏆 {names[winner]} {t("gagne avec", "wins with")}{" "}
+            {allTotals[winner].total}!
           </strong>
-          <button className="bigAction" onClick={() => setSetup(true)}>
+          <button
+            className="bigAction"
+            onClick={() => {
+              if (
+                window.confirm(
+                  t("Commencer une nouvelle partie?", "Start a new game?"),
+                )
+              )
+                setSetup(true);
+            }}
+          >
             <RotateCcw size={20} />
             {t("Nouvelle partie", "New game")}
           </button>

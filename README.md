@@ -82,3 +82,30 @@ La clé doit être ajoutée dans Supabase → Edge Functions → Secrets : `ANTH
 ## Déploiement
 
 Déployé sur Vercel (`vercel.json` inclus) : build `npm run build`, dossier `dist`.
+
+
+## Version 2.6 — collection étendue et reprise des parties
+
+- Huit nouveaux jeux : Cribbage contre ordinateur (121 points), Farkle / 10 000 (1–6 joueurs), dominos double-six, dames anglaises, huit américain, Sudoku (3 niveaux et défi quotidien), charades (2 équipes) et bataille navale.
+- Yam’s et bataille navale disponibles dans « Jouer ensemble ». L’hôte vérifie les actions; la vue navale ne contient jamais la grille adverse. Les flottes sont placées automatiquement. Le modèle de confiance reste celui d’un hôte arbitre.
+- Deux nouvelles aventures originales bilingues hors ligne : Le phare oublié et Le signal des étoiles. Elles comportent des choix, objets, tests au dé et fins de mission.
+- Recherche de jeux, favoris, filtres par mode et connexion, durées approximatives et retour au dernier jeu.
+- Grande visibilité, contraste élevé et animations réduites. Les dés passent en mode statique lorsque les animations sont réduites ou que WebGL n’est pas disponible. Orientation portrait ou paysage autorisée.
+- Sauvegarde des parties locales ajoutée au Yam’s, aux pokers, au blackjack, au pendu, au Memory, au tic-tac-toe, au Puissance 4 et à Plus haut/plus bas, ainsi qu’aux modes de cartes libres. Les nouveaux jeux sauvegardent leur état. Les données locales restent soumises à l’espace disponible et à l’effacement des données du navigateur.
+- Paiements et changements de score annulables; confirmation avant réinitialisation de la banque ou des scores. Les gains du poker vidéo sont réglés avant l’animation.
+- Mise à jour proposée au joueur, avec installation à son choix. Les fichiers de la version sont précachés à la première ouverture; l’IA et les salles en réseau demandent toujours Internet.
+- Lia dispose d’un journal manuel (vie, inventaire, objectifs, résumé) transmis comme contexte. Il ne calcule pas automatiquement les règles du personnage.
+
+Les adversaires des nouveaux jeux utilisent des stratégies simples. Les variantes affichées dans les règles sont celles implémentées : Farkle à doublement des séries, dames anglaises sur 8 × 8 et huit américain sans cartes pénalité supplémentaires. Les sauvegardes de différentes données sont synchronisées par le mécanisme existant; les salles en réseau restent temporaires.
+
+### Vérifications
+
+```bash
+npm ci
+npm test       # règles des nouveaux jeux + moteurs des solitaires
+npm run build # inclut le manifeste de cache hors ligne
+npx playwright install chromium
+npm run test:ui # téléphone, tablette, reprise, anglais et hors ligne
+```
+
+GitHub Actions exécute ces vérifications sur chaque pull request et publication de code.
