@@ -1,5 +1,12 @@
 // Outils partagés : langue, stockage local (synchronisé avec le compte), sons, hasard
-import { createContext, useContext, useEffect, useId, useRef, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+} from "react";
 
 // ---------- Langue ----------
 export const LangContext = createContext("fr");
@@ -16,12 +23,12 @@ export const META_KEY = "bgh2__meta";
 export const STORE_EVENT = "bgh-store";
 
 export function readStored(key, initial) {
-  const fallback = typeof initial === "function" ? initial() : initial;
+  const fallback = () => (typeof initial === "function" ? initial() : initial);
   try {
     const raw = localStorage.getItem(key);
-    return raw == null ? fallback : JSON.parse(raw);
+    return raw == null ? fallback() : JSON.parse(raw);
   } catch {
-    return fallback;
+    return fallback();
   }
 }
 
@@ -41,7 +48,9 @@ export function writeStored(key, value, { source = "local", at } = {}) {
   } catch {
     // Stockage indisponible (navigation privée) : on continue en mémoire
   }
-  window.dispatchEvent(new CustomEvent(STORE_EVENT, { detail: { key, source } }));
+  window.dispatchEvent(
+    new CustomEvent(STORE_EVENT, { detail: { key, source } }),
+  );
 }
 
 export function useStored(key, initial) {
@@ -82,12 +91,19 @@ export const STATS_KEY = "bgh2_stats";
 // Enregistre une partie : result = "win" | "loss" | "draw" ; score optionnel (meilleur score gardé)
 export function recordGame(gameId, result, score) {
   const stats = readStored(STATS_KEY, {}) || {};
-  const s = stats[gameId] || { played: 0, wins: 0, losses: 0, draws: 0, best: null };
+  const s = stats[gameId] || {
+    played: 0,
+    wins: 0,
+    losses: 0,
+    draws: 0,
+    best: null,
+  };
   s.played += 1;
   if (result === "win") s.wins += 1;
   else if (result === "loss") s.losses += 1;
   else if (result === "draw") s.draws += 1;
-  if (typeof score === "number" && (s.best === null || score > s.best)) s.best = score;
+  if (typeof score === "number" && (s.best === null || score > s.best))
+    s.best = score;
   stats[gameId] = s;
   writeStored(STATS_KEY, stats);
 }
@@ -148,7 +164,8 @@ function noise(duration = 0.08, freq = 2500, volume = 0.25) {
   const length = Math.floor(a.sampleRate * duration);
   const buffer = a.createBuffer(1, length, a.sampleRate);
   const data = buffer.getChannelData(0);
-  for (let i = 0; i < length; i += 1) data[i] = (Math.random() * 2 - 1) * (1 - i / length);
+  for (let i = 0; i < length; i += 1)
+    data[i] = (Math.random() * 2 - 1) * (1 - i / length);
   const src = a.createBufferSource();
   src.buffer = buffer;
   const filter = a.createBiquadFilter();
@@ -170,8 +187,12 @@ export const sfx = {
     tone(880, 0.16, "triangle", 0.14, 0.09);
   },
   bad: () => tone(160, 0.25, "sawtooth", 0.07),
-  win: () => [523, 659, 784, 1046].forEach((f, i) => tone(f, 0.22, "triangle", 0.15, i * 0.11)),
-  lose: () => [392, 330, 262].forEach((f, i) => tone(f, 0.28, "sine", 0.14, i * 0.16))
+  win: () =>
+    [523, 659, 784, 1046].forEach((f, i) =>
+      tone(f, 0.22, "triangle", 0.15, i * 0.11),
+    ),
+  lose: () =>
+    [392, 330, 262].forEach((f, i) => tone(f, 0.28, "sine", 0.14, i * 0.16)),
 };
 
 export function vibrate(pattern) {
