@@ -1,19 +1,32 @@
 // Tic-tac-toe (morpion) : à deux ou contre l'ordinateur
 import { useEffect, useState } from "react";
 import { Cpu, RotateCcw, Users } from "lucide-react";
-import { randomInt, sfx, useLang, vibrate, recordGame } from "../lib/core.js";
+import {
+  randomInt,
+  sfx,
+  useLang,
+  vibrate,
+  recordGame,
+  useStored,
+} from "../lib/core.js";
 import { seatName } from "../screens/PlayersSheet.jsx";
 
 const LINES = [
-  [0, 1, 2], [3, 4, 5], [6, 7, 8],
-  [0, 3, 6], [1, 4, 7], [2, 5, 8],
-  [0, 4, 8], [2, 4, 6]
+  [0, 1, 2],
+  [3, 4, 5],
+  [6, 7, 8],
+  [0, 3, 6],
+  [1, 4, 7],
+  [2, 5, 8],
+  [0, 4, 8],
+  [2, 4, 6],
 ];
 
 function winnerOf(board) {
   for (const line of LINES) {
     const [a, b, c] = line;
-    if (board[a] && board[a] === board[b] && board[a] === board[c]) return { player: board[a], line };
+    if (board[a] && board[a] === board[b] && board[a] === board[c])
+      return { player: board[a], line };
   }
   return board.every(Boolean) ? { player: "draw", line: [] } : null;
 }
@@ -21,15 +34,29 @@ function winnerOf(board) {
 // Minimax : l'ordinateur joue parfaitement en mode difficile
 function minimax(board, player) {
   const result = winnerOf(board);
-  if (result) return { score: result.player === "O" ? 10 : result.player === "X" ? -10 : 0 };
+  if (result)
+    return {
+      score: result.player === "O" ? 10 : result.player === "X" ? -10 : 0,
+    };
   const moves = [];
   board.forEach((cell, i) => {
     if (cell) return;
     const next = [...board];
     next[i] = player;
-    moves.push({ index: i, score: minimax(next, player === "O" ? "X" : "O").score });
+    moves.push({
+      index: i,
+      score: minimax(next, player === "O" ? "X" : "O").score,
+    });
   });
-  return moves.reduce((best, m) => (player === "O" ? (m.score > best.score ? m : best) : m.score < best.score ? m : best));
+  return moves.reduce((best, m) =>
+    player === "O"
+      ? m.score > best.score
+        ? m
+        : best
+      : m.score < best.score
+        ? m
+        : best,
+  );
 }
 
 function Mark({ value }) {
@@ -51,14 +78,26 @@ function Mark({ value }) {
 
 export default function TicTacToe({ players }) {
   const { t } = useLang();
-  const [vsCpu, setVsCpu] = useState(true);
-  const [hard, setHard] = useState(false);
-  const [board, setBoard] = useState(Array(9).fill(null));
-  const [turn, setTurn] = useState("X");
-  const [score, setScore] = useState({ X: 0, O: 0, draw: 0 });
+  const [vsCpu, setVsCpu] = useStored("bgh2_save_tictactoe_vsCpu", true);
+  const [hard, setHard] = useStored("bgh2_save_tictactoe_hard", false);
+  const [board, setBoard] = useStored(
+    "bgh2_save_tictactoe_board",
+    Array(9).fill(null),
+  );
+  const [turn, setTurn] = useStored("bgh2_save_tictactoe_turn", "X");
+  const [score, setScore] = useStored("bgh2_save_tictactoe_score", {
+    X: 0,
+    O: 0,
+    draw: 0,
+  });
   const result = winnerOf(board);
   // Noms : en mode 2 joueurs, les deux premiers joueurs à la table
-  const nameOf = (mark) => (vsCpu ? (mark === "X" ? t("Toi", "You") : t("Ordi", "CPU")) : seatName(players, mark === "X" ? 0 : 1, t));
+  const nameOf = (mark) =>
+    vsCpu
+      ? mark === "X"
+        ? t("Toi", "You")
+        : t("Ordi", "CPU")
+      : seatName(players, mark === "X" ? 0 : 1, t);
 
   function play(i) {
     if (board[i] || result) return;
@@ -74,7 +113,16 @@ export default function TicTacToe({ players }) {
     const r = winnerOf(next);
     if (r) {
       setScore((s) => ({ ...s, [r.player]: s[r.player] + 1 }));
-      recordGame("tictactoe", r.player === "draw" ? "draw" : !vsCpu ? "played" : r.player === "X" ? "win" : "loss");
+      recordGame(
+        "tictactoe",
+        r.player === "draw"
+          ? "draw"
+          : !vsCpu
+            ? "played"
+            : r.player === "X"
+              ? "win"
+              : "loss",
+      );
       if (r.player === "draw") sfx.bad();
       else if (vsCpu && r.player === "O") sfx.lose();
       else sfx.win();
@@ -86,9 +134,14 @@ export default function TicTacToe({ players }) {
   useEffect(() => {
     if (!vsCpu || turn !== "O" || result) return;
     const timer = setTimeout(() => {
-      const empty = board.map((c, i) => (c ? null : i)).filter((i) => i !== null);
+      const empty = board
+        .map((c, i) => (c ? null : i))
+        .filter((i) => i !== null);
       // Facile : parfois un coup au hasard
-      const i = hard || Math.random() > 0.45 ? minimax(board, "O").index : empty[randomInt(empty.length)];
+      const i =
+        hard || Math.random() > 0.45
+          ? minimax(board, "O").index
+          : empty[randomInt(empty.length)];
       move(i, "O");
     }, 450);
     return () => clearTimeout(timer);
@@ -118,34 +171,62 @@ export default function TicTacToe({ players }) {
     <div className="game ttt">
       <div className="gameBar">
         <div className="segmented small">
-          <button className={vsCpu ? "active" : ""} onClick={() => { setVsCpu(true); reset(); setScore({ X: 0, O: 0, draw: 0 }); }}>
+          <button
+            className={vsCpu ? "active" : ""}
+            onClick={() => {
+              setVsCpu(true);
+              reset();
+              setScore({ X: 0, O: 0, draw: 0 });
+            }}
+          >
             <Cpu size={15} /> {t("Vs ordi", "Vs CPU")}
           </button>
-          <button className={!vsCpu ? "active" : ""} onClick={() => { setVsCpu(false); reset(); setScore({ X: 0, O: 0, draw: 0 }); }}>
+          <button
+            className={!vsCpu ? "active" : ""}
+            onClick={() => {
+              setVsCpu(false);
+              reset();
+              setScore({ X: 0, O: 0, draw: 0 });
+            }}
+          >
             <Users size={15} /> {t("2 joueurs", "2 players")}
           </button>
         </div>
         {vsCpu && (
-          <button className={`chipButton ${hard ? "accent" : ""}`} onClick={() => setHard(!hard)}>
+          <button
+            className={`chipButton ${hard ? "accent" : ""}`}
+            onClick={() => setHard(!hard)}
+          >
             {hard ? t("Imbattable", "Unbeatable") : t("Facile", "Easy")}
           </button>
         )}
       </div>
 
       <div className="scoreStrip">
-        <span className="sx">{nameOf("X")} (X) · {score.X}</span>
-        <span>{t("Nuls", "Draws")} · {score.draw}</span>
-        <span className="so">{nameOf("O")} (O) · {score.O}</span>
+        <span className="sx">
+          {nameOf("X")} (X) · {score.X}
+        </span>
+        <span>
+          {t("Nuls", "Draws")} · {score.draw}
+        </span>
+        <span className="so">
+          {nameOf("O")} (O) · {score.O}
+        </span>
       </div>
 
       <div className="boardWrap">
-      <div className="tttBoard">
-        {board.map((cell, i) => (
-          <button key={i} className={`tttCell ${result?.line.includes(i) ? "win" : ""}`} onClick={() => play(i)} aria-label={`${i + 1}`}>
-            <Mark value={cell} />
-          </button>
-        ))}
-      </div>
+        <div className="tttBoard">
+          {board.map((cell, i) => (
+            <button
+              key={i}
+              className={`tttCell ${result?.line.includes(i) ? "win" : ""}`}
+              onClick={() => play(i)}
+              aria-label={`${i + 1}`}
+            >
+              <Mark value={cell} />
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className={`gameStatus ${result ? "done" : ""}`}>{status}</div>
