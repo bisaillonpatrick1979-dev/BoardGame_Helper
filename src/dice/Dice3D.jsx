@@ -1,16 +1,43 @@
 // Composant React qui affiche le plateau de dés 3D
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
 import { DiceEngine } from "./DiceEngine.js";
 import { DICE_PALETTES } from "./diceGeometry.js";
 import { isHexColor } from "./customDice.js";
 
-const Dice3D = forwardRef(function Dice3D(
-  { sides = 6, count = 1, paletteId = "ivory", customPalette = null, felt = "#16325c", sound = true, compact = false, className = "", onRollStart, onResult, hint, canRoll, canHold },
-  ref
+import SimpleDice from "./SimpleDice.jsx";
+import { useStored } from "../lib/core.js";
+
+const PhysicsDice3D = forwardRef(function PhysicsDice3D(
+  {
+    sides = 6,
+    count = 1,
+    paletteId = "ivory",
+    customPalette = null,
+    felt = "#16325c",
+    sound = true,
+    compact = false,
+    className = "",
+    onRollStart,
+    onResult,
+    hint,
+    canRoll,
+    canHold,
+    initialDice,
+    onUnavailable,
+  },
+  ref,
 ) {
   const hostRef = useRef(null);
   const engineRef = useRef(null);
   const [labels, setLabels] = useState([]);
+  const firstDice = useRef(initialDice);
+  const resetting = useRef(false);
   const [rolling, setRolling] = useState(false);
   const [webglError, setWebglError] = useState(false);
 
@@ -21,6 +48,7 @@ const Dice3D = forwardRef(function Dice3D(
   useEffect(() => {
     let engine;
     try {
+      firstDice.current = initialDice;
       engine = new DiceEngine(hostRef.current, {
         felt,
         sound,
@@ -29,17 +57,21 @@ const Dice3D = forwardRef(function Dice3D(
           callbacks.current.onRollStart?.();
         },
         onResult: (result) => {
+          if (resetting.current) return;
           if (!result.silent) setRolling(false);
           callbacks.current.onResult?.(result);
         },
         onLabels: setLabels,
         // Permet à un jeu (ex. Yam's) de bloquer les lancers ou les dés gardés
-        canRoll: () => (callbacks.current.canRoll ? callbacks.current.canRoll() : true),
-        canHold: () => (callbacks.current.canHold ? callbacks.current.canHold() : true)
+        canRoll: () =>
+          callbacks.current.canRoll ? callbacks.current.canRoll() : true,
+        canHold: () =>
+          callbacks.current.canHold ? callbacks.current.canHold() : true,
       });
     } catch (error) {
-      console.error(error);
+      console.warn("3D unavailable; using static dice", error);
       setWebglError(true);
+      onUnavailable?.();
       return undefined;
     }
     engineRef.current = engine;
@@ -52,8 +84,17 @@ const Dice3D = forwardRef(function Dice3D(
 
   const resetDice = () => {
     // Dé personnalisé (faces texte/couleur) ou couleur standard
-    const palette = customPalette || DICE_PALETTES.find((p) => p.id === paletteId) || DICE_PALETTES[0];
+    const palette =
+      customPalette ||
+      DICE_PALETTES.find((p) => p.id === paletteId) ||
+      DICE_PALETTES[0];
+    resetting.current = true;
     engineRef.current?.setDice(sides, count, palette);
+    if (firstDice.current?.values?.length === count)
+      engineRef.current?.restoreDice(firstDice.current);
+    firstDice.current = null;
+    resetting.current = false;
+    engineRef.current?.emitResult(true);
     setRolling(false);
   };
 
@@ -73,15 +114,21 @@ const Dice3D = forwardRef(function Dice3D(
   useImperativeHandle(ref, () => ({
     roll: () => engineRef.current?.roll(),
     releaseAll: () => engineRef.current?.releaseAll(),
-    reset: resetDice
+    reset: resetDice,
   }));
 
   if (webglError) {
-    return <div className="diceTray diceTrayError">3D non disponible sur cet appareil.</div>;
+    return (
+      <div className="diceTray diceTrayError">
+        3D non disponible sur cet appareil.
+      </div>
+    );
   }
 
   return (
-    <div className={`diceTray ${compact ? "diceTrayCompact" : ""} ${className}`}>
+    <div
+      className={`diceTray ${compact ? "diceTrayCompact" : ""} ${className}`}
+    >
       <div ref={hostRef} className="diceTrayCanvas" />
       {!rolling &&
         labels.map((label, index) => (
@@ -93,7 +140,11 @@ const Dice3D = forwardRef(function Dice3D(
             {customPalette?.labels ? (
               isHexColor(customPalette.labels[label.value - 1]) ? (
                 <b className="colorBadge">
-                  <i style={{ background: customPalette.labels[label.value - 1] }} />
+                  <i
+                    style={{
+                      background: customPalette.labels[label.value - 1],
+                    }}
+                  />
                 </b>
               ) : (
                 <b>{customPalette.labels[label.value - 1]}</b>
@@ -108,4 +159,22 @@ const Dice3D = forwardRef(function Dice3D(
   );
 });
 
+const Dice3D = forwardRef(function Dice3D(props, ref) {
+  const [reduced] = useStored("bgh2_reduced_motion", false);
+  const [unavailable, setUnavailable] = useState(false);
+  const snapshot = useRef(props.initialDice);
+  const Component = reduced || unavailable ? SimpleDice : PhysicsDice3D;
+  return (
+    <Component
+      {...props}
+      ref={ref}
+      initialDice={snapshot.current}
+      onUnavailable={() => setUnavailable(true)}
+      onResult={(result) => {
+        snapshot.current = result;
+        props.onResult?.(result);
+      }}
+    />
+  );
+});
 export default Dice3D;
